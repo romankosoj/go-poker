@@ -1,0 +1,28 @@
+package events
+
+// IN:
+
+const JOIN = "JOIN"
+const PLAYER_ACTION = "PLAYER_ACTION"
+const BLIND_SET = "SET_BLIND"
+
+// OUT:
+
+const REQUIRED_EVENT_NAME_MISSING = "The event recieved does not match the required event name"
+const GAME_START = "GAME_START"
+const DEALER_SET = "DEALER_SET"
+const WAIT_FOR_SMALL_BLIND_SET = "WAIT_FOR_SMALL_BLIND_SET"
+const SMALL_BLIND_SET = "SMALL_BLIND_SET"
+const WAIT_FOR_BIG_BLIND_SET = "WAIT_FOR_BIG_BLIND_SET"
+const BIG_BLIND_SET = "BIG_BLIND_SET"
+
+const HOLE_CARDS = "HOLE_CARDS"
+const WAIT_FOR_PLAYER_ACTION = "WAIT_FOR_PLAYER_ACTION"
+const ACTION_PROCESSED = "ACTION_PROCESSED"
+
+const PLAYER_LEAVES = "PLAYER_LEAVES"
+
+const GAME_END = "GAME_END"
+const FLOP = "FLOP"
+const TURN = "TURN"
+const RIVER = "RIVER"

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg class="card" width="2.5in" height="3.5in" face="AS" preserveAspectRatio="none" viewBox="-120 -168 240 336" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<symbol id="b" preserveAspectRatio="xMinYMid" viewBox="-500 -500 1000 1000">
+<path d="m-270 460h160m-90-10 200-910 200 910m-90 10h160m-390-330h240" fill="none" stroke="#000" stroke-linecap="square" stroke-miterlimit="1.5" stroke-width="80"/>
+</symbol>
+<symbol id="a" preserveAspectRatio="xMinYMid" viewBox="-600 -600 1200 1200">
+<path d="m0-500c100 250 355 400 355 685a150 150 0 0 1-300 0 10 10 0 0 0-20 0c0 200 50 215 95 315h-260c45-100 95-115 95-315a10 10 0 0 0-20 0 150 150 0 0 1-300 0c0-285 255-435 355-685z"/>
+</symbol>
+<rect x="-119.5" y="-167.5" width="239" height="335" rx="12" ry="12" fill="#fff" stroke="#000"/>
+<use x="-82.4" y="-82.4" width="164.8" height="164.8" stroke="black" stroke-dasharray="100,100" stroke-linecap="round" stroke-width="100" xlink:href="#a"/>
+<use x="-82.4" y="-82.4" width="164.8" height="164.8" stroke="white" stroke-width="50" xlink:href="#a"/>
+<use x="-82.4" y="-82.4" width="164.8" height="164.8" fill="black" xlink:href="#a"/>
+<path transform="translate(0,-10)rotate(45)scale(1.704)translate(-14,-14)" d="m4 4h7v7h-7m1-6v5h5v-5m2-1h2v1h1v-1h2v3h-1v1h1v1h-2v-2h1v-1h-3v1h-1m6-3h7v7h-7m1-6v5h5v-5m-18 1h3v3h-3m14-3h3v3h-3m-8-1h2v1h-2m0 1h1v1h1v-1h1v2h1v1h1v-1h1v1h1v2h1v1h-1v2h1v-1h2v-1h-1v-1h1v1h1v3h1v-2h1v2h-1v1h1v1h-2v-2h-1v1h-1v-1h1v-1h-2v3h2v1h-1v1h-3v-1h2v-1h-1v-1h-1v1h-1v3h1v1h-2v-2h-2v2h-2v-1h1v-2h-1v-5h-2v-1h-2v1h-3v-2h-1v-3h1v3h1v-1h1v-2h6v-1h-1m4-1h1v1h-1m-3 1v1h1v-1m-5 1v2h1v-1h1v-1m9-1h1v2h-1m2-2h3v3h-1v-2h-2m-11 1v1h1v2h1v-2h1v-1m3 0v1h1v-1m-11 1v1h1v-1m2 0v1h1v-1m3 0v2h1v-1h1v-1m1 1v1h1v-1m-5 1v2h1v1h1v1h2v-1h1v-2h-2v1h-1v-1h-1v-1m1 0v1h1v-1m-12 1h7v7h-7m1-6v5h5v-5m-4 1h3v3h-3m7-2v1h2v-1m8 1h2v1h-1v2h-1v-1h-1v1h-1v-1h1v-1h1" fill="#fff"/>
+<text y="100.4" font-family="Bariol" font-size="20" text-anchor="middle">www.me.uk</text>
+<text y="120.4" font-family="Bariol" font-size="20" text-anchor="middle">/cards/</text>
+<use x="-114.4" y="-156" width="32" height="32" xlink:href="#b"/>
+<use x="-111.784" y="-119" width="26.769" height="26.769" xlink:href="#a"/>
+<g transform="rotate(180)">
+<use x="-114.4" y="-156" width="32" height="32" xlink:href="#b"/>
+<use x="-111.784" y="-119" width="26.769" height="26.769" xlink:href="#a"/>
+</g>
+</svg>
