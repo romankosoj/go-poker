@@ -60,11 +60,14 @@ class View extends React.Component {
             }
         }
         if (event === UpdateEvents.player) {
-            console.log(this.players);
-            this.players[data].updateFromState();
+            if (this.players){
+                this.players[data].updateFromState();
+            }
         }
         if (event === UpdateEvents.dealer) {
-            this.players[data].updateFromState();
+            if (this.players) {
+                this.players[data].updateFromState();
+            }
         }
         if (event === UpdateEvents.board) {
             this.board.updateFromState();

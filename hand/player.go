@@ -125,7 +125,13 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 
 	if !checkIfEmpty(blocking) {
 		log.Printf("Blocking is not empty")
-		h.recAction(blocking, (i+1)%blockingLength, preflop)
+
+		next := (i + 1) % len(blocking)
+		if blockingLength < len(blocking) {
+			next = i % len(blocking)
+		}
+		// blocking has changed now so the length is different and the
+		h.recAction(blocking, next, preflop)
 	}
 
 	log.Printf("Done now leaving")

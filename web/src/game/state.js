@@ -134,17 +134,17 @@ class GameState {
 
             case FLOP:
                 this.state.roundState = 1;
-                this.state.board.concat(e.data.cards);
+                this.state.board = e.data.cards;
                 this.onUpdate(UpdateEvents.board);
                 break;
             case TURN:
                 this.state.roundState = 2;
-                this.state.board.concat(e.data.cards);
+                this.state.board = this.state.board.concat(e.data.cards);
                 this.onUpdate(UpdateEvents.board);
                 break;
             case RIVER:
                 this.state.roundState = 3;
-                this.state.board.concat(e.data.cards);
+                this.state.board = this.state.board.concat(e.data.cards);
                 this.onUpdate(UpdateEvents.board);
                 break;
 
