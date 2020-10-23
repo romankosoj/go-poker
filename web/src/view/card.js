@@ -56,6 +56,9 @@ class Card extends Container {
                 case 3:
                     uni = "♠"
                     break;
+                default:
+                    uni=""
+                    break;
             }
             if (this.card.value === -1 || this.card.color === -1) {
                 this.sprite.text = emptyCardText;

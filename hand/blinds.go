@@ -7,33 +7,55 @@ import (
 	"github.com/JohnnyS318/go-poker/utils"
 )
 
-func (h *Hand) smallBlind() {
+func (h *Hand) setBlinds() {
+	success := false
 
-	//TODO better error handeling (3 tries then move to next)
-	i := (h.Dealer + 1) % h.InCount
-	utils.SendToAll(h.Players, events.NewWaitSmallBlindEvent(i))
-	blind := h.In[i]
-	e := <-blind.In
+	var smallBlindIndex int
+	for !success {
+		smallBlindAmount := h.Blind / 2
 
-	log.Printf("event received %v", e)
+		var i int
+		for j := 1; j < len(h.Players)-1; j++ {
+			i = (h.Dealer + j) % len(h.Players)
+			if h.Players[i].Active && h.Dealer != i {
+				break
+			}
+		}
 
-	r, err := events.ToBlindSet(e)
+		player := &h.Players[i]
 
-	if err != nil {
-		log.Printf("err %v", err)
+		err := h.Bank.PlayerBet(player.ID, smallBlindAmount)
+
+		if err != nil {
+			log.Printf("Folding player due to invalid buyin in smallBlind")
+			h.fold(player.ID)
+			continue
+		}
+
+		utils.SendToAll(h.Players, events.NewActionProcessedEvent(2, smallBlindAmount, i, player))
+		success = true
+		smallBlindIndex = i
 	}
 
-	h.Bank.SmallBlind(blind.ID, r)
-	log.Printf("small blind received %v", r)
-}
+	success = false
+	for !success {
+		var i int
+		for j := 1; j < len(h.Players)-2; j++ {
+			i = (smallBlindIndex + j) % len(h.Players)
+			if h.Players[i].Active && h.Dealer != i && smallBlindIndex != i {
+				break
+			}
+		}
 
-func (h *Hand) bigBlind() {
-	//TODO better error handeling (3 tries then move to next)
-	i := (h.Dealer + 2) % h.InCount
-	utils.SendToAll(h.Players, events.NewWaitBigBlindEvent(i))
-	blind := h.In[i]
-	e := <-blind.In
-	r, _ := events.ToBlindSet(e)
-	h.Bank.BigBlind(blind.ID, r)
-	log.Printf("big blind received %v", r)
+		player := &h.Players[i]
+		err := h.Bank.PlayerBet(player.ID, h.Blind)
+
+		if err != nil {
+			log.Printf("Folding player due to invalid buyin in bigBlind")
+			h.fold(player.ID)
+			continue
+		}
+		utils.SendToAll(h.Players, events.NewActionProcessedEvent(2, h.Blind, i, player))
+		success = true
+	}
 }

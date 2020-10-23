@@ -37,18 +37,19 @@ func ToAction(raw *models.Event) (*Action, error) {
 }
 
 type WaitForActionEvent struct {
-	Position int
-	Preflop  bool
+	Position        int  `json:"position"`
+	PossibleActions byte `json:"possibleActions"`
 }
 
-func NewWaitForActionEvent(position int, preflop bool) *models.Event {
-	return models.NewEvent(WAIT_FOR_PLAYER_ACTION, &WaitForActionEvent{Position: position, Preflop: preflop})
+// NewWaitForAction is an event that the server is waiting for an action from a given player. The possible actions range from 0001 = Fold | 0010=Bet | 0100=Raise | 1000=Check to 1111=All
+func NewWaitForActionEvent(position int, possibleActions byte) *models.Event {
+	return models.NewEvent(WAIT_FOR_PLAYER_ACTION, &WaitForActionEvent{Position: position, PossibleActions: possibleActions})
 }
 
 type ActionProcessedEvent struct {
 	Action   int                  `json:"action" mapstructure:"action"`
 	Player   *models.PublicPlayer `json:"player" mapstructure:"player"`
-	Position int                  `json:"positon" mapstructure:"position"`
+	Position int                  `json:"position" mapstructure:"position"`
 	Amount   int                  `json:"amount" mapstructure:"amount"`
 }
 

@@ -13,15 +13,18 @@ import (
 //Hand is one game of a session. it results in everybody but one folding or a showdown
 type Hand struct {
 	//Players includes all the Players who have started this hand. After a fold the player is still included
-	Players []models.Player
-	//In includes all the Players who are still in this hand. After folding the player is removed from this list
-	In        []models.Player
-	Bank      *bank.Bank
-	Board     [5]models.Card
-	HoleCards map[string][2]models.Card
-	InCount   int
-	Dealer    int
-	cardGen   *utils.CardGenerator
+	Players         []models.Player
+	Bank            *bank.Bank
+	Board           [5]models.Card
+	HoleCards       map[string][2]models.Card
+	InCount         int
+	Dealer          int
+	Ended           bool
+	cardGen         *utils.CardGenerator
+	EndCallback     func(int)
+	Blind           int
+	bigBlindIndex   int
+	smallBlindIndex int
 }
 
 //NewHand creates a new hand and sets the dealer to the next
@@ -38,13 +41,20 @@ func NewHand(players []models.Player, bank *bank.Bank, previousDealer int) *Hand
 	}
 
 	return &Hand{
-		Players:   players,
-		In:        players,
+		Players: players,
+		//In:        players,
 		Bank:      bank,
 		Dealer:    dealer,
 		HoleCards: make(map[string][2]models.Card, len(players)),
 		InCount:   len(players),
 		cardGen:   utils.NewCardSelector(),
+		Blind:     10,
 	}
 
+}
+
+func (h *Hand) WhileNotEnded(f func()) {
+	if !h.Ended {
+		f()
+	}
 }

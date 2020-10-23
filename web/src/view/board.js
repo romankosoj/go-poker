@@ -2,12 +2,11 @@ import { Container, Graphics } from "pixi.js";
 import { Card, CARDHEIGHT, CARDWIDTH } from "./card";
 import { rW, rH, isMobile } from "./utils";
 
-let cardHeight = 0;
-
 class Board extends Container {
 
-    constructor(id, options) {
+    constructor(id, options, state) {
         super();
+        this.state = state;
         this.id = id;
         this.options = {
             paddingX: 20,
@@ -113,8 +112,11 @@ class Board extends Container {
         card.position.set(rW(itemX), rW(this.options.paddingY));
         itemX += this.options.paddingCardX + CARDWIDTH;
         this.cards.addChild(card);
-        cardHeight = card.height;
         return card
+    }
+
+    updateFromState(){
+        this.pushOrUpdate(this.state.board);
     }
 }
 export { Board }

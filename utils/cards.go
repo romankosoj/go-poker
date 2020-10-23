@@ -43,12 +43,12 @@ func (s *CardGenerator) Reset() {
 //SelectRandom randomly selects a card from the stack and returns a copy of it
 func (s *CardGenerator) SelectRandom() models.Card {
 	i := rand.Intn(51 - s.SelectedCards)
-	log.Printf("Random card index %d, %v", i, s.SelectedCards)
 	c := s.Cards[i]
 	// if selected card is last. the last card has not to be swapped
 	if i != 51-s.SelectedCards {
 		s.Cards[51-s.SelectedCards], s.Cards[i] = c, s.Cards[51-s.SelectedCards]
 		s.SelectedCards++
 	}
+	log.Printf("Random card: %v", c)
 	return c
 }

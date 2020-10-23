@@ -8,6 +8,7 @@ type Player struct {
 	BuyIn    int    `json:"buyin" mapstructure:"buyin"`
 	Out      chan []byte
 	In       chan *Event
+	Active   bool
 }
 
 func NewPlayer(username, id string, buyin int, in chan *Event, out chan []byte) *Player {
@@ -17,6 +18,7 @@ func NewPlayer(username, id string, buyin int, in chan *Event, out chan []byte) 
 		BuyIn:    buyin,
 		Out:      out,
 		In:       in,
+		Active:   false,
 	}
 }
 

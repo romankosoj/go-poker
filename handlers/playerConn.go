@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"log"
 
 	"github.com/JohnnyS318/go-poker/models"
@@ -8,10 +9,11 @@ import (
 )
 
 type PlayerConn struct {
-	conn   *websocket.Conn
-	Out    chan []byte
-	In     chan *models.Event
-	Events map[string]EventHandler
+	conn    *websocket.Conn
+	Out     chan []byte
+	In      chan *models.Event
+	Events  map[string]EventHandler
+	OnClose func(error)
 }
 
 type EventHandler func(*models.Event)
@@ -34,13 +36,10 @@ func (p *PlayerConn) reader() {
 		if err != nil {
 
 			log.Printf("Err reader", err)
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Printf("WS Message Error: %v", err)
 			}
-			event := models.NewEvent("LEAVE_LOBBY", "")
-			if action, ok := p.Events[event.Name]; ok {
-				action(event)
-			}
+			p.OnClose(err)
 			break
 		}
 
@@ -73,11 +72,16 @@ func (p *PlayerConn) writer() {
 			if !ok {
 				log.Printf("Closing conn due to sending error")
 				p.conn.WriteMessage(websocket.CloseMessage, make([]byte, 0))
+				p.conn.Close()
+				p.OnClose(errors.New("Error during message chanelling"))
 				return
 			}
 
 			w, err := p.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
+				p.conn.WriteMessage(websocket.CloseMessage, make([]byte, 0))
+				p.conn.Close()
+				p.OnClose(err)
 				return
 			}
 
@@ -86,9 +90,4 @@ func (p *PlayerConn) writer() {
 			w.Close()
 		}
 	}
-}
-
-func (p *PlayerConn) On(eventName string, action EventHandler) *PlayerConn {
-	p.Events[eventName] = action
-	return p
 }

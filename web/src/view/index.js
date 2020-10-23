@@ -1,145 +1,127 @@
-import { Application, Graphics, InteractionManager, Renderer } from "pixi.js";
+import { Application, Graphics, InteractionManager, Loader, Renderer } from "pixi.js";
 import React from "react";
 import { Board } from "./board";
 import { Player } from "./player";
 import { rW, rH, registerApp, isMobile } from "./utils";
+import PropTypes from 'prop-types';
+import { Game } from "../connection/socket";
+import { UpdateEvents } from "../game/state";
 
 class View extends React.Component {
     constructor(props) {
         super(props);
-    }
-
-    componentDidMount() {
-        const d = document.getElementById("view");
-        this.app = new Application({
-            antialias: true,
-            transparent: false,
-            resolution: 1,
-            resizeTo: window,
-        });
-
-        this.app.renderer.backgroundColor = 0xffffff;
-
-        d.appendChild(this.app.view);
-
-        this.app.loader
-            .add("textures/cards.json")
-            .load(this.setup.bind(this))
-
-        Renderer.registerPlugin("interaction", InteractionManager);
-
-        registerApp(this.app);
+        console.log("Game", props.game);
+        console.log("State", props.game.state);
+        this.gameState = props.game.state;
+        this.game = props.game.state.state;
 
         this.angles = [];
         this.players = [];
     }
+    
+    componentDidMount() {
+        this.props.game.started.then(() => {
+            console.log("game started in view");
+            const d = document.getElementById("view");
 
-    setup() {
-        let id = this.app.loader.resources["textures/cards.json"].textures;
+            this.app = new Application({
+                antialias: true,
+                transparent: false,
+                resolution: 1,
+                resizeTo: window,
+            });
 
-        rH(0);
-
-        let playersState = [
-            {
-                username: "test",
-                bet: 120,
-                cards: [
-                    { value: 1, color: 2 },
-                    { value: 5, color: 3 },
-                ],
-            },
-            {
-                username: "test",
-                bet: 120,
-                cards: [
-                    { value: 1, color: 2 },
-                    { value: 12, color: 3 },
-                ],
-            },
-            {
-                username: "test",
-                bet: 120,
-                cards: [
-                    { value: 1, color: 2 },
-                    { value: 12, color: 3 },
-                ],
-            },
-            {
-                username: "test2",
-                bet: 120,
-                cards: [
-                    { value: 1, color: 2 },
-                    { value: 12, color: 3 },
-                ],
-            }, {
-                username: "you",
-                bet: 120,
-                cards: [
-                    { value: 1, color: 2 },
-                    { value: 12, color: 3 },
-                ],
-            }, {
-                username: "test",
-                bet: 120,
-                cards: [
-                    { value: 1, color: 2 },
-                    { value: 12, color: 3 },
-                ],
-            },
-        ];
-
-        let table = new Graphics();
-        table.beginFill(0x1daf08);
-        const tableWidth = rW(375);
-        const tableHeight = rH(225);
-        table.drawEllipse(tableWidth, tableHeight, tableWidth, tableHeight)
-        //table.drawRoundedRect(0, 0, tableWidth * 2, tableHeight * 2, tableHeight)
-        table.position.set(this.app.renderer.width / 2 - tableWidth, this.app.renderer.height / 2 - tableHeight)
-        table.endFill();
-        this.app.stage.addChild(table);
-
-        let board = new Board(id, {});
-        board.addCards(3);
-        board.update({
-            updatedWidth: () => {
-                board.position.set((this.app.renderer.width / 2) - (board.width / 2), (this.app.renderer.height / 2) - (board.height / 2));
-            }
+            this.gameState.setOnUpdate(this.gameUpdate.bind(this));
+    
+            this.app.loader = this.props.loader;
+            this.app.loader.load(this.setup.bind(this))        
+    
+            Renderer.registerPlugin("interaction", InteractionManager);
+    
+            this.app.renderer.backgroundColor = 0xffffff;
+    
+            d.appendChild(this.app.view);
+    
+            registerApp(this.app);
         })
-        board.position.set((this.app.renderer.width / 2) - (board.width / 2), (this.app.renderer.height / 2) - (board.height / 2));
-
-
-        this.app.stage.addChild(board);
-
-        setTimeout(() => {
-            board.pushOrUpdate([
-                { value: 2, color: 1 },
-                { value: 11, color: 3 },
-                { value: 12, color: 2 },
-                { value: 12, color: 2 },
-            ])
-        }, 2000)
-
-        console.log(isMobile());
-
-        if (isMobile()) {
-            this.generatePlayers(id, playersState, tableWidth - rW(75), tableHeight - rH(65), table.x + tableWidth, table.y + tableHeight);
-        } else {
-            this.generatePlayers(id, playersState, tableWidth, tableHeight, table.x + tableWidth, table.y + tableHeight);
-        }
-        this.app.ticker.add(delta => this.gameLoop(delta))
     }
 
-    generatePlayers(id, playersState, tWidth, tHeight, tX, tY) {
-        let n = playersState.length
-        let a = 360 / n;
-        for (let i = 0; i < n; i++) {
-            this.angles.push(a * i * Math.PI / 180);
-            let player = new Player(id, playersState[i], this.angles[i]);
-            const x = tX + (tWidth + player.width) * Math.cos(this.angles[i]);
-            const y = tY + (tHeight + player.height) * Math.sin(this.angles[i]);
-            player.position.set(x, y);
-            this.players.push(player);
-            this.app.stage.addChild(player);
+    gameUpdate(event, data){
+        console.log("Game Update in view [", event, "]: ", data);
+        if (event === UpdateEvents.playerList){
+            this.updatePlayers();
+        }
+        if (event === UpdateEvents.player){
+            console.log(this.players);
+            this.players[data].updateFromState();
+        }
+        if (event === UpdateEvents.dealer) {
+            this.players[data].updateFromState();
+        }
+        if (event === UpdateEvents.board) {
+            this.board.updateFromState();
+        }
+    }
+
+
+    setup() {
+        this.id = this.app.loader.resources["textures/cards.json"].textures;
+
+        this.table = new Graphics();
+        this.table.beginFill(0x1daf08);
+        this.tableWidth = rW(375);
+        this.tableHeight = rH(225);
+        this.table.drawEllipse(this.tableWidth, this.tableHeight, this.tableWidth, this.tableHeight)
+        //table.drawRoundedRect(0, 0, this.tableWidth * 2, this.tableHeight * 2, this.tableHeight)
+        this.table.position.set(this.app.renderer.width / 2 - this.tableWidth, this.app.renderer.height / 2 - this.tableHeight)
+        this.table.endFill();
+        this.app.stage.addChild(this.table);
+
+        this.board = new Board(this.id, {}, this.game);
+        this.board.addCards(3);
+        this.board.update({
+            updatedWidth: () => {
+                this.board.position.set((this.app.renderer.width / 2) - (this.board.width / 2), (this.app.renderer.height / 2) - (this.board.height / 2));
+            }
+        })
+        this.board.position.set((this.app.renderer.width / 2) - (this.board.width / 2), (this.app.renderer.height / 2) - (this.board.height / 2));
+
+
+        this.app.stage.addChild(this.board);
+
+        this.updatePlayers();
+        //this.app.ticker.add(delta => this.gameLoop(delta))
+    }
+
+    updatePlayers(){
+        if (isMobile()) {
+            this.generatePlayers(this.id, this.game.players, this.tableWidth - rW(75), this.tableHeight - rH(65), this.table.x + this.tableWidth, this.table.y + this.tableHeight)
+        } else {
+            this.generatePlayers(this.id, this.game.players, this.tableWidth, this.tableHeight, this.table.x + this.tableWidth, this.table.y + this.tableHeight)
+        }
+    }
+
+    generatePlayers(id, players, tWidth, tHeight, tX, tY) {
+        if (this.game.players && this.game.players.length){
+            this.players = [];
+            this.angles = [];
+            let n = players.length
+            let a = 360 / n;
+            for (let i = 0; i < n; i++) {
+                this.angles.push(a * i * Math.PI / 180);
+                let player = new Player(id, 
+                    {
+                        angle: this.angles[i],
+                    },
+                    this.gameState,
+                    i
+                );
+                const x = tX + (tWidth + player.width) * Math.cos(this.angles[i]);
+                const y = tY + (tHeight + player.height) * Math.sin(this.angles[i]);
+                player.position.set(x, y);
+                this.players.push(player);
+                this.app.stage.addChild(player);
+            }
         }
     }
 
@@ -149,6 +131,11 @@ class View extends React.Component {
             </div>
         )
     }
+}
+
+View.propTypes = {
+    game: PropTypes.instanceOf(Game),
+    loader: PropTypes.instanceOf(Loader),
 }
 
 export default View;

@@ -6,7 +6,6 @@ class Player {
         this.bet = 0;
         this.cards = []
         this.in = true;
-        this.lastAction;
         this.isLastAction = false;
         this.waiting = false;
     }

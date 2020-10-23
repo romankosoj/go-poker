@@ -28,6 +28,10 @@ func (h *Lobby) Join(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	playerConn := NewPlayerConn(conn)
+	playerConn.OnClose = func(err error) {
+		log.Printf("Closing err %v", err)
+		return
+	}
 
 	go playerConn.reader()
 
@@ -43,6 +47,8 @@ func (h *Lobby) Join(rw http.ResponseWriter, r *http.Request) {
 		log.Printf("joinEvent was invalid %v", err)
 		playerConn.Out <- models.NewEvent("VALIDATION_FAILED", "The joining event was not as the server expected").ToRaw()
 		conn.Close()
+		http.Error(rw, "VALIDATION_FAILED. The joining event was not as the server expected", http.StatusBadRequest)
+		return
 	}
 
 	player := models.NewPlayer(joinEvent.Username, joinEvent.ID, joinEvent.BuyIn, playerConn.In, playerConn.Out)
@@ -54,9 +60,9 @@ func (h *Lobby) Join(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	playerConn.On("LEAVE_LOBBY", func(event *models.Event) {
-		log.Printf("Removed player in Lobby")
+	playerConn.OnClose = func(err error) {
+		log.Printf("Removed player from lobby")
 		lobby.RemovePlayerByID(joinEvent.ID)
-	})
+	}
 
 }

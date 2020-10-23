@@ -45,23 +45,29 @@ func (l *Lobby) RemovePlayerByID(id string) error {
 
 	i := l.FindPlayerByID(id)
 
+	log.Printf("Removing player index %v", i)
+
 	if i < 0 {
 		return errors.New("The player is not in the lobby")
 	}
 
-	log.Printf("Game runnnin ?: [%v]", l.GameStarted)
+	log.Printf("Game runing ?: [%v]", l.GameStarted)
 
 	if l.GameStarted {
 		log.Printf("PlayerLeave exec")
 		l.PlayerLeaves(id)
 	}
 
-	return l.RemovePlayer(i)
+	err := l.RemovePlayer(i)
+
+	log.Printf("Players in lobby? %v", len(l.Players))
+
+	return err
 }
 
 func (l *Lobby) RemovePlayer(i int) error {
-	s := l.Players
-	s[len(s)-1], s[i] = s[i], s[len(s)-1]
+	//Keep order so that the next dealer is choosen correctly.
+	l.Players = append(l.Players[:i], l.Players[i+1:]...)
 	l.Callback()
 	return nil
 }
@@ -84,7 +90,8 @@ func (l *Lobby) Start() {
 
 	// SETUP
 	dealer := -1
-	for {
+	for l.GameStarted {
+
 		time.Sleep(1 * time.Second)
 
 		log.Printf("Game started")
@@ -100,6 +107,9 @@ func (l *Lobby) Start() {
 			}
 			err = hand.PlayerLeaves(id)
 			return err
+		}
+		hand.EndCallback = func(dealer int) {
+			l.GameStarted = false
 		}
 		dealer = hand.Start()
 	}

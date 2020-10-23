@@ -9,7 +9,7 @@ import (
 )
 
 func (h *Hand) searchByID(id string) (*models.Player, int, error) {
-	for i, n := range h.In {
+	for i, n := range h.Players {
 		if n.ID == id {
 			return &n, i, nil
 		}
@@ -17,6 +17,17 @@ func (h *Hand) searchByID(id string) (*models.Player, int, error) {
 	return nil, -1, errors.New("Player not in game")
 }
 
+func (h *Hand) searchByActiveID(id string) (int, error) {
+	for i, n := range h.Players {
+		if n.ID == id && n.Active {
+			return i, nil
+		}
+	}
+	return -1, errors.New("Player not in game")
+}
+
 func (h *Hand) sendDealer() {
-	utils.SendToAll(h.In, models.NewEvent(events.DEALER_SET, h.Dealer))
+	if !h.Ended {
+		utils.SendToAll(h.Players, models.NewEvent(events.DEALER_SET, h.Dealer))
+	}
 }

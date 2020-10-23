@@ -1,33 +1,50 @@
 import { JOIN } from "../events/constants"
-import { CreateEvent } from "../events/event";
+import { SendCreateEvent, SendEvent } from "../events/event";
 
 class Game {
-    constructor(state) {
+    constructor(state, entry, onClose) {
+        this.state = state;
+        this.credentials = entry;
+        this.onClose = onClose.bind(this);
+        this.started = new Promise((resolve, reject) => {
+            this.state.setOnGameStart(() => {
+                console.log("Resolving game start");
+                resolve();
+            });
+        });
+    }
 
+    start(){
+        console.log(this.state.name);
         this.ws = new WebSocket("ws://localhost:8080/join")
-        ws.onclose = e => {
+        this.ws.onclose = e => {
             console.log("close", e)
         };
 
-        ws.onopen = e => {
+        this.ws.onopen = e => {
             console.log("open", e)
 
             if (e.type === "error") {
+                this.onClose();
                 return
             }
-
-            ws.send(CreateEvent(JOIN, { username: "test", id: "testId" }))
+            
+            // Join event
+            this.ws.send(SendCreateEvent(JOIN, this.credentials));
         };
 
-        ws.onmessage = e => {
-            console.log("open", e)
-            this.state.decodeChange(e);
-
+        this.ws.onmessage = e => {
+            this.state.decodeChange(JSON.parse(e.data));
         };
 
-        ws.onerror = e => {
-            console.log("open", e)
+        this.ws.onerror = e => {
+            console.log("error", e)
+            this.onClose();
         };
+    }
+
+    send(event){
+        this.ws.send(SendEvent(event));
     }
 }
 

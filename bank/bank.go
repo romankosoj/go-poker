@@ -47,7 +47,7 @@ func (b *Bank) PlayerBet(id string, amount int) error {
 		return fmt.Errorf("The player does not have the capacity to bet %v ", amount)
 	}
 
-	if b.Round.MaxBet < 1 && amount < b.Round.MaxBet && playerValue != amount {
+	if amount < b.Round.MaxBet && playerValue != amount {
 
 		// Player bet is les than round bet and is not an all in => invalid
 		return errors.New("The player has to bet more or equal the round bet or do an all in")
@@ -65,14 +65,6 @@ func (b *Bank) PlayerBet(id string, amount int) error {
 	log.Printf("Bet on the round")
 
 	return err
-}
-
-func (b *Bank) SmallBlind(id string, amount int) error {
-	return b.PlayerBet(id, amount)
-}
-
-func (b *Bank) BigBlind(id string, amount int) error {
-	return b.PlayerBet(id, amount)
 }
 
 func (b *Bank) RemovePlayer(id string) error {

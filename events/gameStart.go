@@ -4,7 +4,7 @@ import "github.com/JohnnyS318/go-poker/models"
 
 type GameStartEvent struct {
 	Players  []models.PublicPlayer `json:"players"`
-	Position int
+	Position int                   `json:"position"`
 }
 
 func NewGameStartEvent(publicPlayers []models.PublicPlayer, position int) *models.Event {

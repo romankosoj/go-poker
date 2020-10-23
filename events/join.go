@@ -10,7 +10,7 @@ import (
 type JoinEvent struct {
 	Username string `json:"username" mapstructure:"username"`
 	ID       string `json:"id" mapstructure:"id"`
-	BuyIn    int    `json:"value" mapstructure:"buyin"`
+	BuyIn    int    `json:"buyin" mapstructure:"buyin"`
 }
 
 func ToJoinEvent(raw *models.Event) (*JoinEvent, error) {

@@ -13,27 +13,29 @@ func (h *Hand) Start() int {
 
 	//publish players and position
 
-	var publicPlayer []models.PublicPlayer
+	time.Sleep(3 * time.Second)
 
-	for _, n := range h.In {
-		publicPlayer = append(publicPlayer, *n.ToPublic())
+	var publicPlayers []models.PublicPlayer
+
+	for i, n := range h.Players {
+		publicPlayers = append(publicPlayers, *n.ToPublic())
+		n.Active = true
+		h.Players[i].Active = true
 	}
 
-	for i := range h.In {
-		utils.SendToPlayerInList(h.In, i, events.NewGameStartEvent(publicPlayer, i))
+	for i := range h.Players {
+		utils.SendToPlayerInList(h.Players, i, events.NewGameStartEvent(publicPlayers, i))
 	}
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	// Publish choosen Dealer
 
 	h.sendDealer()
+	time.Sleep(3 * time.Second)
 
-	time.Sleep(5 * time.Second)
-
-	// choose blinds
-	h.smallBlind()
-	h.bigBlind()
+	//set predefined blinds
+	h.setBlinds()
 
 	log.Printf("Blinds Choosen")
 
@@ -42,7 +44,7 @@ func (h *Hand) Start() int {
 
 	log.Printf("Hole cards choosen")
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	h.actions(true)
 
@@ -57,22 +59,28 @@ func (h *Hand) Start() int {
 
 	//
 	h.actions(false)
-
 	// send turn result
-
 	utils.SendToAll(h.Players, events.NewTurnEvent(h.Board))
 
-	h.actions(false)
+	h.WhileNotEnded(func() {
+		h.actions(false)
+		// send river result
+		utils.SendToAll(h.Players, events.NewRiverEvent(h.Board))
+	})
 
-	// send river result
+	h.WhileNotEnded(func() {
+		h.actions(false)
+		log.Printf("Showdown")
+	})
 
-	utils.SendToAll(h.Players, events.NewRiverEvent(h.Board))
-
-	h.actions(false)
-
-	log.Printf("Showdown")
-
-	h.showdown()
+	h.WhileNotEnded(func() {
+		h.showdown()
+	})
 
 	return h.Dealer
+}
+
+func (h *Hand) End() {
+	log.Printf("Ending Hand due to error")
+	h.Ended = true
 }

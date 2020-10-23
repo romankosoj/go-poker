@@ -11,21 +11,27 @@ import (
 )
 
 func (h *Hand) holeCards() {
-	for _, n := range h.In {
-		var cards [2]models.Card
-		cards[0] = h.cardGen.SelectRandom()
-		cards[1] = h.cardGen.SelectRandom()
-		h.HoleCards[n.ID] = cards
-		log.Printf("Cards 0:%v 1:%v", cards[0].String(), cards[1].String())
-		utils.SendToPlayer(&n, events.NewHoleCardsEvent(cards))
+	for i := range h.Players {
+		if h.Players[i].Active {
+			var cards [2]models.Card
+			cards[0] = h.cardGen.SelectRandom()
+			cards[1] = h.cardGen.SelectRandom()
+			h.HoleCards[h.Players[i].ID] = cards
+			log.Printf("Cards 0:%v 1:%v", cards[0].String(), cards[1].String())
+			utils.SendToPlayer(&h.Players[i], events.NewHoleCardsEvent(cards))
+		}
 	}
 }
 
 func (h *Hand) recAction(blocking [10]*models.Player, i int, preflop bool) {
 
+	if checkIfEmpty(blocking) {
+		return
+	}
 	p := blocking[i]
 
-	if p == nil {
+	if p == nil || !p.Active {
+		blocking[i] = nil
 		h.recAction(blocking, (i+1)%10, preflop)
 	}
 
@@ -61,7 +67,7 @@ func (h *Hand) recAction(blocking [10]*models.Player, i int, preflop bool) {
 				if err == nil {
 					success = true
 					payload = a.Payload
-					addAllButThisBlockgin(blocking, h.In, p)
+					addAllButThisBlockgin(blocking, h.Players, p)
 
 					break
 				}
@@ -90,7 +96,7 @@ func (h *Hand) recAction(blocking [10]*models.Player, i int, preflop bool) {
 		removeBlocking(blocking, i)
 	}
 
-	utils.SendToAll(h.In, events.NewActionProcessedEvent(a.Action, payload, i, p))
+	utils.SendToAll(h.Players, events.NewActionProcessedEvent(a.Action, payload, i, p))
 	time.Sleep(3 * time.Second)
 
 	if !checkIfEmpty(blocking) {
@@ -102,32 +108,43 @@ func (h *Hand) recAction(blocking [10]*models.Player, i int, preflop bool) {
 }
 
 func (h *Hand) fold(id string) {
-	_, i, err := h.searchByID(id)
+	i, err := h.searchByActiveID(id)
+
+	log.Printf("folding player %v", id)
+
 	if err != nil {
 		log.Printf("Error during Folding Player[%v]: %v", i, err)
 		return
 	}
-	h.In = append(h.In[:i], h.In[i+1:]...)
+
+	h.Players[i].Active = false
 	h.InCount--
 }
 
 func (h *Hand) playerError(i int, message string) {
-	utils.SendToPlayerInList(h.In, i, models.NewEvent("INVALID_ACTION", message))
+	utils.SendToPlayerInList(h.Players, i, models.NewEvent("INVALID_ACTION", message))
 }
 
 func (h *Hand) actions(preflop bool) {
 	var blocking [10]*models.Player
-	for i, n := range h.In {
-		blocking[i] = &n
+	for i, n := range h.Players {
+		log.Printf("Blocking %v %v:", n.Active, n)
+		if n.Active {
+			blocking[i] = &n
+		}
 	}
 	h.recAction(blocking, (h.Dealer+3)%h.InCount, preflop)
 }
 
 func (h *Hand) waitForAction(i int, preflop bool) (*events.Action, error) {
 
-	utils.SendToAll(h.In, events.NewWaitForActionEvent(i, preflop))
+	if preflop {
+		utils.SendToAll(h.Players, events.NewWaitForActionEvent(i, 0b111))
+	} else {
+		utils.SendToAll(h.Players, events.NewWaitForActionEvent(i, 0b1111))
+	}
 
-	n := h.In[i]
+	n := h.Players[i]
 	e := <-n.In
 	action, err := events.ToAction(e)
 	if err != nil {
@@ -146,10 +163,11 @@ func (h *Hand) PlayerLeaves(id string) error {
 		return err
 	}
 
-	h.Players = append(h.Players[:i], h.Players[i+1:]...)
-	h.In = append(h.In[:i], h.In[i+1:]...)
-
 	utils.SendToAll(h.Players, models.NewEvent(events.PLAYER_LEAVES, events.NewPlayerLeavesEvent(n, i)))
+
+	if len(h.Players) < 3 {
+		h.End()
+	}
 
 	return nil
 }

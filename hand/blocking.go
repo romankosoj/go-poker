@@ -31,7 +31,7 @@ func addBlocking(blocking [10]*models.Player, i int, player *models.Player) erro
 
 func addAllButThisBlockgin(blocking [10]*models.Player, players []models.Player, player *models.Player) {
 	for i, n := range players {
-		if n.ID != player.ID {
+		if n.ID != player.ID && n.Active {
 			blocking[i] = &n
 		}
 	}
