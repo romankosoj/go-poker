@@ -17,8 +17,8 @@ const (
 
 //Card represents a play card which has a color and a value
 type Card struct {
-	Color int
-	Value int
+	Color int `json:"color" mapstructure:"color"`
+	Value int `json:"value" mapstructure:"value"`
 }
 
 //NewCard creates a card from the color and value given

@@ -4,7 +4,7 @@ import { Board } from "./board";
 class Player extends Container {
     constructor(id, options, state, index) {
         super();
-        
+
         this.state = state;
         this.playerState = this.state.getPlayerState(index);
         this.index = index;
@@ -58,18 +58,18 @@ class Player extends Container {
         this.avatar.beginFill(this.options.fillAvatar);
         this.avatar.drawCircle(this.options.avatarRadius, this.options.avatarRadius, this.options.avatarRadius);
         this.avatar.endFill();
-        
+
         // updateCards
-        this.board.pushOrUpdate(this.options.cards);
-        
-        
+        this.board.pushOrUpdate(this.playerState.cards);
+
+
         this.board.position.set(this.options.marginX, this.avatar.height + 2 * this.options.marginY);
         if (this.left) {
-            this.usernameLabel.pivot.set(0,0);
+            this.usernameLabel.pivot.set(0, 0);
             this.avatar.position.set(this.board.width - this.options.avatarRadius, this.options.marginY)
             this.usernameLabel.position.set(this.options.marginX, this.avatar.height / 2);
         } else {
-            this.usernameLabel.pivot.set(this.usernameLabel.width,0);
+            this.usernameLabel.pivot.set(this.usernameLabel.width, 0);
             this.avatar.position.set(this.options.marginX, this.options.marginY);
             this.usernameLabel.position.set(this.board.width, this.avatar.height / 2)
         }
@@ -87,10 +87,16 @@ class Player extends Container {
         this.pivot.set(this.width * 0.5, this.height * 0.5);
     }
 
-    updateFromState(){
+    updateFromState() {
         this.playerState = this.state.getPlayerState(this.index);
         this.update({});
         console.log("Waiting for player ?:", this.playerState.waiting, " [", this.index, "]");
+    }
+
+    updateCardsFromState() {
+        this.playerState = this.state.getPlayerState(this.index);
+        this.update({});
+        console.log("Updated Cards: ", this.playerState.cards)
     }
 }
 

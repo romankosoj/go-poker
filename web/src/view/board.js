@@ -12,6 +12,7 @@ class Board extends Container {
             paddingX: 20,
             paddingY: 20,
             paddingCardX: 10,
+            minWidth: 100,
             updatedWidth: () => { },
         };
 
@@ -101,7 +102,7 @@ class Board extends Container {
         }
         this.background.clear();
         this.background.beginFill(0x000000, 0.12);
-        this.background.drawRoundedRect(0, 0, rW(this.w), this.h, rH(10));
+        this.background.drawRoundedRect(0, 0, Math.max(rW(this.w), rW(this.options.minWidth)), this.h, rH(10));
         this.background.endFill();
         this.options.updatedWidth();
     }
@@ -115,8 +116,9 @@ class Board extends Container {
         return card
     }
 
-    updateFromState(){
+    updateFromState() {
         this.pushOrUpdate(this.state.board);
+        console.log("Board:", this.state.board)
     }
 }
 export { Board }

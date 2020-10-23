@@ -92,6 +92,10 @@ func (l *Lobby) Start() {
 	dealer := -1
 	for l.GameStarted {
 
+		for i := range l.Players {
+			l.Players[i].Active = true
+		}
+
 		time.Sleep(1 * time.Second)
 
 		log.Printf("Game started")

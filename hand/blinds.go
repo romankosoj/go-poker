@@ -32,7 +32,7 @@ func (h *Hand) setBlinds() {
 			continue
 		}
 
-		utils.SendToAll(h.Players, events.NewActionProcessedEvent(2, smallBlindAmount, i, player))
+		utils.SendToAll(h.Players, events.NewActionProcessedEvent(2, smallBlindAmount, i))
 		success = true
 		smallBlindIndex = i
 	}
@@ -55,7 +55,7 @@ func (h *Hand) setBlinds() {
 			h.fold(player.ID)
 			continue
 		}
-		utils.SendToAll(h.Players, events.NewActionProcessedEvent(2, h.Blind, i, player))
+		utils.SendToAll(h.Players, events.NewActionProcessedEvent(2, h.Blind, i))
 		success = true
 	}
 }

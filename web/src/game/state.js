@@ -16,19 +16,19 @@ class GameState {
             bigBlind: 0,
             lastAction: -1,
         };
-        this.onPossibleAction = (actions) => {};
+        this.onPossibleAction = (actions) => { };
         this.name = "GameState test";
     }
 
-    setOnGameStart(onGameStart){
+    setOnGameStart(onGameStart) {
         this.onGameStart = onGameStart.bind(this);
     }
 
-    setOnGameEnd(onGameEnd){
+    setOnGameEnd(onGameEnd) {
         this.onGameEnd = onGameEnd.bind(this);
     }
 
-    setOnUpdate(onUpdate){
+    setOnUpdate(onUpdate) {
         this.onUpdate = onUpdate.bind(this);
     }
 
@@ -84,8 +84,11 @@ class GameState {
                 break;
 
             case HOLE_CARDS:
-                this.state.players[this.state.player].cards = e.data;
-                this.onUpdate(UpdateEvents.player, this.state.player);
+                for (let i = 0; i < this.state.players.length; i++) {
+                    this.state.players[i].cards = [{ color: -1, value: -1 }, { color: -1, value: -1 },]
+                }
+                this.state.players[this.state.player].cards = e.data.cards;
+                this.onUpdate(UpdateEvents.playerCards);
                 break;
 
             case WAIT_FOR_PLAYER_ACTION:
@@ -102,7 +105,7 @@ class GameState {
                     const end = this.state.players.slice(e.data.index, this.state.players.length - 1);
                     this.state.players.splice(w, 1, end);
                 }
-                this.onUpdate();
+                this.onUpdate(UpdateEvents.playerList);
                 break;
 
             case ACTION_PROCESSED:
@@ -155,12 +158,12 @@ class GameState {
         }
     }
 
-    getPlayerState(position){
+    getPlayerState(position) {
         return this.state.players[position];
     }
 }
 
-export { GameState}
+export { GameState }
 
 export const UpdateEvents = {
     gameStart: 1,
@@ -169,5 +172,6 @@ export const UpdateEvents = {
     board: 4,
     gameEnd: 5,
     dealer: 6,
+    playerCards: 7,
 
 }

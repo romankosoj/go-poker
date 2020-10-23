@@ -4,8 +4,8 @@ import "github.com/JohnnyS318/go-poker/models"
 
 //SendToAll is a utitlity for sending an event (message) to an entire array (lobby) of players.
 func SendToAll(players []models.Player, event *models.Event) {
-	for _, n := range players {
-		n.Out <- event.ToRaw()
+	for i := range players {
+		players[i].Out <- event.ToRaw()
 	}
 }
 

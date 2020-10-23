@@ -1,38 +1,44 @@
 package hand
 
-import "github.com/JohnnyS318/go-poker/models"
+import (
+	"log"
+	"sort"
 
-func checkIfEmpty(blocking [10]*models.Player) bool {
-	for i := 0; i < 10; i++ {
-		if blocking[i] != nil {
-			return false
-		}
-	}
-	return true
+	"github.com/JohnnyS318/go-poker/models"
+)
+
+func checkIfEmpty(blocking []int) bool {
+	return len(blocking) <= 0
 }
 
-func removeBlocking(blocking [10]*models.Player, i int) {
-	blocking[i] = nil
+func removeBlocking(blocking []int, i int) []int {
+	b := append(blocking[:i], blocking[i+1:]...)
+	log.Printf("Removed player [%v] now blocking: %v", i, b)
+	return b
 }
 
-func addBlocking(blocking [10]*models.Player, i int, player *models.Player) error {
+func addBlocking(blocking []int, k int) error {
 	isOn := false
 	for _, n := range blocking {
-		if n.ID == player.ID {
+		if n == k {
 			isOn = true
 		}
 	}
 	if !isOn {
-		blocking[i] = player
+		blocking = append(blocking, k)
 	}
+	sort.Slice(blocking, func(i, j int) bool {
+		return blocking[i] < blocking[j]
+	})
 
 	return nil
 }
 
-func addAllButThisBlockgin(blocking [10]*models.Player, players []models.Player, player *models.Player) {
-	for i, n := range players {
-		if n.ID != player.ID && n.Active {
-			blocking[i] = &n
+func addAllButThisBlockgin(blocking []int, players []models.Player, k int) {
+	blocking = nil
+	for i := range players {
+		if i != k && players[i].Active {
+			blocking = append(blocking, i)
 		}
 	}
 }

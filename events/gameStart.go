@@ -15,7 +15,7 @@ func NewGameStartEvent(publicPlayers []models.PublicPlayer, position int) *model
 }
 
 type HoleCardsEvent struct {
-	Cards [2]models.Card
+	Cards [2]models.Card `json:"cards"`
 }
 
 func NewHoleCardsEvent(cards [2]models.Card) *models.Event {

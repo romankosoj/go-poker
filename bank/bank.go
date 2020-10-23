@@ -16,8 +16,10 @@ type Bank struct {
 func NewBank(players []models.Player) *Bank {
 	values := make(map[string]int)
 
-	for _, n := range players {
-		values[n.ID] = n.BuyIn
+	for i, n := range players {
+		if players[i].Active {
+			values[n.ID] = n.BuyIn
+		}
 	}
 
 	return &Bank{
@@ -42,10 +44,14 @@ func (b *Bank) PlayerBet(id string, amount int) error {
 		return errors.New("Player not registered in bank")
 	}
 
+	log.Printf("player was found")
+
 	if playerValue < amount {
 		log.Printf("The player %v does not have the capacity to bet %v ", id, amount)
 		return fmt.Errorf("The player does not have the capacity to bet %v ", amount)
 	}
+
+	log.Printf("Max bet is %v, with player betting %v", b.Round.MaxBet, amount)
 
 	if amount < b.Round.MaxBet && playerValue != amount {
 

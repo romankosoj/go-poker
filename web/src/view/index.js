@@ -18,7 +18,7 @@ class View extends React.Component {
         this.angles = [];
         this.players = [];
     }
-    
+
     componentDidMount() {
         this.props.game.started.then(() => {
             console.log("game started in view");
@@ -32,26 +32,34 @@ class View extends React.Component {
             });
 
             this.gameState.setOnUpdate(this.gameUpdate.bind(this));
-    
+
             this.app.loader = this.props.loader;
-            this.app.loader.load(this.setup.bind(this))        
-    
+            this.app.loader.load(this.setup.bind(this))
+
             Renderer.registerPlugin("interaction", InteractionManager);
-    
+
             this.app.renderer.backgroundColor = 0xffffff;
-    
+
             d.appendChild(this.app.view);
-    
+
             registerApp(this.app);
         })
     }
 
-    gameUpdate(event, data){
-        console.log("Game Update in view [", event, "]: ", data);
-        if (event === UpdateEvents.playerList){
+    gameUpdate(event, data) {
+        if (this.players.length < 0) {
             this.updatePlayers();
         }
-        if (event === UpdateEvents.player){
+        console.log("Game Update in view [", event, "]: ", data);
+        if (event === UpdateEvents.playerList) {
+            this.updatePlayers();
+        }
+        if (event === UpdateEvents.playerCards) {
+            for (let i = 0; i < this.players.length; i++) {
+                this.players[i].updateCardsFromState();
+            }
+        }
+        if (event === UpdateEvents.player) {
             console.log(this.players);
             this.players[data].updateFromState();
         }
@@ -93,7 +101,7 @@ class View extends React.Component {
         //this.app.ticker.add(delta => this.gameLoop(delta))
     }
 
-    updatePlayers(){
+    updatePlayers() {
         if (isMobile()) {
             this.generatePlayers(this.id, this.game.players, this.tableWidth - rW(75), this.tableHeight - rH(65), this.table.x + this.tableWidth, this.table.y + this.tableHeight)
         } else {
@@ -102,14 +110,14 @@ class View extends React.Component {
     }
 
     generatePlayers(id, players, tWidth, tHeight, tX, tY) {
-        if (this.game.players && this.game.players.length){
+        if (this.game.players && this.game.players.length) {
             this.players = [];
             this.angles = [];
             let n = players.length
             let a = 360 / n;
             for (let i = 0; i < n; i++) {
                 this.angles.push(a * i * Math.PI / 180);
-                let player = new Player(id, 
+                let player = new Player(id,
                     {
                         angle: this.angles[i],
                     },

@@ -47,17 +47,17 @@ func NewWaitForActionEvent(position int, possibleActions byte) *models.Event {
 }
 
 type ActionProcessedEvent struct {
-	Action   int                  `json:"action" mapstructure:"action"`
-	Player   *models.PublicPlayer `json:"player" mapstructure:"player"`
-	Position int                  `json:"position" mapstructure:"position"`
-	Amount   int                  `json:"amount" mapstructure:"amount"`
+	Action int `json:"action" mapstructure:"action"`
+	//Player   *models.PublicPlayer `json:"player" mapstructure:"player"`
+	Position int `json:"position" mapstructure:"position"`
+	Amount   int `json:"amount" mapstructure:"amount"`
 }
 
-func NewActionProcessedEvent(action, amount, position int, player *models.Player) *models.Event {
+func NewActionProcessedEvent(action, amount, position int) *models.Event {
 	return models.NewEvent(ACTION_PROCESSED, &ActionProcessedEvent{
 		Action:   action,
 		Position: position,
 		Amount:   amount,
-		Player:   player.ToPublic(),
+		//Player:   player.ToPublic(),
 	})
 }
