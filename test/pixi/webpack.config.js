@@ -18,8 +18,8 @@ module.exports = {
     ],
     output: {
         path: path.join(__dirname, "dist"),
-        filename: "[name].js",
-        sourceMapFilename: "[name].js.map",
+        filename: "main.js",
+        sourceMapFilename: "main.js.map",
     },
     devtool: "source-map",
     devServer: {

@@ -45,7 +45,7 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 	success := false
 	for j := 3; j > 0; j-- {
 		a, err := h.waitForAction(i, preflop)
-		succeededAction = *a
+		succeededAction = a
 		if err != nil {
 			h.playerError(i, fmt.Sprintf("The action was not valid. %v more tries", j))
 		}
@@ -74,15 +74,17 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 		}
 
 		if a.Action == events.RAISE {
+			log.Printf("Raised to [%v] > [%v]", a.Payload, h.Bank.Round.MaxBet)
 			if a.Payload > h.Bank.Round.MaxBet {
-				err := h.Bank.PlayerBet(h.Players[k].ID, a.Payload)
+				amount := a.Payload
+				err := h.Bank.PlayerBet(h.Players[k].ID, amount)
 				if err == nil {
 					success = true
 					succeededAction = events.Action{
 						Action:  a.Action,
-						Payload: a.Payload,
+						Payload: amount,
 					}
-					payload = a.Payload
+					payload = amount
 					addAllButThisBlockgin(blocking, h.Players, blocking[i])
 
 					break
@@ -121,15 +123,16 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 	utils.SendToAll(h.Players, events.NewActionProcessedEvent(succeededAction.Action, payload, i))
 
 	log.Printf("Send now continueing")
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
 
 	if !checkIfEmpty(blocking) {
 		log.Printf("Blocking is not empty")
 
 		next := (i + 1) % len(blocking)
-		if blockingLength < len(blocking) {
+		if blockingLength > len(blocking) {
 			next = i % len(blocking)
 		}
+		log.Printf("next is [%v] in %v", next, blocking)
 		// blocking has changed now so the length is different and the
 		h.recAction(blocking, next, preflop)
 	}
@@ -159,17 +162,32 @@ func (h *Hand) playerError(i int, message string) {
 }
 
 func (h *Hand) actions(preflop bool) {
+
+	var startIndexPlayers int
+	for j := 1; j < len(h.Players); j++ {
+		startIndexPlayers = (h.bigBlindIndex + j) % len(h.Players)
+		if h.Players[startIndexPlayers].Active {
+			break
+		}
+	}
+
+	startIndexBlocking := -1
 	blocking := make([]int, 0)
 	for i, n := range h.Players {
 		if n.Active {
 			blocking = append(blocking, i)
+			if startIndexPlayers == i {
+				startIndexBlocking = i
+			}
 		}
 	}
 	log.Printf("Blocking: %v", blocking)
-	h.recAction(blocking, (h.Dealer+3)%len(blocking), preflop)
+	log.Printf("Starting with [%v] bigBlind: [%v]", startIndexBlocking, h.bigBlindIndex)
+
+	h.recAction(blocking, startIndexBlocking, preflop)
 }
 
-func (h *Hand) waitForAction(i int, preflop bool) (*events.Action, error) {
+func (h *Hand) waitForAction(i int, preflop bool) (events.Action, error) {
 
 	if preflop {
 		utils.SendToAll(h.Players, events.NewWaitForActionEvent(i, 0b111))
@@ -181,9 +199,9 @@ func (h *Hand) waitForAction(i int, preflop bool) (*events.Action, error) {
 	e := <-n.In
 	action, err := events.ToAction(e)
 	if err != nil {
-		return nil, err
+		return events.Action{}, err
 	}
-	return action, nil
+	return *action, nil
 }
 
 func (h *Hand) PlayerLeaves(id string) error {

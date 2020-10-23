@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@pixi/interaction": "^5.3.3",
+    "pixi-ease": "^3.0.6",
     "pixi.js": "^5.3.3",
     "source-map-loader": "^1.1.1"
   },

@@ -3,11 +3,8 @@ import { Board } from "./board";
 import { Player } from "./player";
 import { rW, rH, registerApp, isMobile } from "./utils";
 
-const Application = PIXI.Application;
-const TextureCashe = PIXI.utils.TextureCache;
-const Sprite = PIXI.Sprite;
 
-let app = new Application({
+let app = new PIXI.Application({
     resolution: 1,
     antialias: true,
     transparent: false,
@@ -87,10 +84,17 @@ function setup() {
 
     let table = new PIXI.Graphics();
     table.beginFill(0x1daf08);
-    const tableWidth = rW(375);
-    const tableHeight = rH(225);
+    let tableWidth = 375;
+    let tableHeight = 225;
+
+    if (isMobile()) {
+        tableWidth = 85;
+        tableHeight = 50;
+    }
+
     table.drawEllipse(tableWidth, tableHeight, tableWidth, tableHeight)
     //table.drawRoundedRect(0, 0, tableWidth * 2, tableHeight * 2, tableHeight)
+
     table.position.set(app.renderer.width / 2 - tableWidth, app.renderer.height / 2 - tableHeight)
     table.endFill();
     app.stage.addChild(table);
@@ -124,6 +128,7 @@ function setup() {
         generatePlayers(id, playersState, tableWidth, tableHeight, table.x + tableWidth, table.y + tableHeight);
     }
 
+    players[0].update({ loading: true })
     state = play;
     app.ticker.add(delta => gameLoop(delta))
 }
@@ -143,7 +148,7 @@ const generatePlayers = (id, playersState, tWidth, tHeight, tX, tY) => {
 }
 
 function gameLoop(delta) {
-
+    players[0].gameLoop(delta)
 }
 
 function play(delta) {

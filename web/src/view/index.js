@@ -56,11 +56,11 @@ class View extends React.Component {
         }
         if (event === UpdateEvents.playerCards) {
             for (let i = 0; i < this.players.length; i++) {
-                this.players[i].updateCardsFromState();
+                this.players[i].updateFromState();
             }
         }
         if (event === UpdateEvents.player) {
-            if (this.players){
+            if (this.players) {
                 this.players[data].updateFromState();
             }
         }
@@ -82,6 +82,12 @@ class View extends React.Component {
         this.table.beginFill(0x1daf08);
         this.tableWidth = rW(375);
         this.tableHeight = rH(225);
+
+        if (isMobile()) {
+            this.tableWidth = 85;
+            this.tableHeight = 50;
+        }
+
         this.table.drawEllipse(this.tableWidth, this.tableHeight, this.tableWidth, this.tableHeight)
         //table.drawRoundedRect(0, 0, this.tableWidth * 2, this.tableHeight * 2, this.tableHeight)
         this.table.position.set(this.app.renderer.width / 2 - this.tableWidth, this.app.renderer.height / 2 - this.tableHeight)
@@ -101,7 +107,13 @@ class View extends React.Component {
         this.app.stage.addChild(this.board);
 
         this.updatePlayers();
-        //this.app.ticker.add(delta => this.gameLoop(delta))
+        this.app.ticker.add(delta => this.gameLoop(delta))
+    }
+
+    gameLoop(delta) {
+        for (let i = 0; i < this.players.length; i++) {
+            this.players[i].gameLoop(delta);
+        }
     }
 
     updatePlayers() {

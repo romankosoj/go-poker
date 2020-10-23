@@ -68,7 +68,6 @@ class Card extends Container {
             } else {
                 this.sprite.texture = Texture.from(`${this.card.value}_${this.card.color}.png`);
             }
-            this.sprite.texture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
             this.sprite.width = rW(CARDWIDTH);
             this.sprite.height = rH(CARDHEIGHT);
         }

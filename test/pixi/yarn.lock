@@ -3391,6 +3391,11 @@ pbkdf2@^3.0.3:
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
 
+penner@^0.1.3:
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/penner/-/penner-0.1.3.tgz#0b8b482d4e9b39af2f3d7c37592229b8acc29705"
+  integrity sha1-C4tILU6bOa8vPXw3WSIpuKzClwU=
+
 picomatch@^2.0.4, picomatch@^2.2.1:
   version "2.2.2"
   resolved "https://registry.yarnpkg.com/picomatch/-/picomatch-2.2.2.tgz#21f333e9b6b8eaff02468f5146ea406d345f4dad"
@@ -3417,6 +3422,14 @@ pinkie@^2.0.0:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/pinkie/-/pinkie-2.0.4.tgz#72556b80cfa0d48a974e80e77248e80ed4f7f870"
   integrity sha1-clVrgM+g1IqXToDnckjoDtT3+HA=
+
+pixi-ease@^3.0.6:
+  version "3.0.6"
+  resolved "https://registry.yarnpkg.com/pixi-ease/-/pixi-ease-3.0.6.tgz#5746c11e7e436d07f0f28ed0dff5d940d88a1642"
+  integrity sha512-IP22mj53Pr9/TKNKUOEFtSpb2zBS8IN+nmDlzORAA4jidsmUTCMT/cwqS75OgqX5+E9teSTVpAhQUJy0ikXV6Q==
+  dependencies:
+    eventemitter3 "^4.0.0"
+    penner "^0.1.3"
 
 pixi.js@^5.3.3:
   version "5.3.3"
