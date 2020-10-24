@@ -44,8 +44,10 @@ class Player extends Container {
         this.waitingVelocity = this.options.waitingAnimationVelocity;
         this.waitingAnimeDir = true;
 
+        this.dealerButton = new Graphics();
+
         this.topRow = new Container()
-        this.topRow.addChild(this.avatar, this.usernameLabel, this.betLabel, this.waiting);
+        this.topRow.addChild(this.avatar, this.usernameLabel, this.betLabel, this.dealerButton, this.waiting);
         this.addChild(this.background, this.topRow, this.board);
 
         this.update(options)
@@ -82,6 +84,17 @@ class Player extends Container {
         }
         this.usernameLabel.pivot.set(this.usernameLabel.width, 0);
 
+        this.dealerButton.clear()
+        this.dealerButton.visible = false;
+
+        if (this.state.state.dealer === this.index) {
+            this.dealerButton.lineStyle(1, 0xEE5015)
+            this.dealerButton.beginFill(0xEEEE00)
+            this.dealerButton.drawCircle(0, 0, this.options.avatarRadius / 2);
+            this.dealerButton.endFill();
+            this.dealerButton.visible = true;
+        }
+
         this.betLabel.text = this.playerState.bet
         this.betLabel.style = {
             fontFamily: this.options.fontFamily,
@@ -102,14 +115,17 @@ class Player extends Container {
         this.board.position.set((this.calcWidth / 2) - (this.board.width / 2) + this.options.marginX, this.avatar.height + 2 * this.options.marginY);
         this.avatar.position.set(this.options.marginX, this.options.marginY);
         this.usernameLabel.position.set(this.calcWidth - this.options.avatarRadius, this.avatar.height / 2)
-        this.betLabel.position.set(this.calcWidth - this.options.avatarRadius - this.usernameLabel.width, this.avatar.height / 2)
+        this.betLabel.position.set(this.calcWidth - this.options.avatarRadius - this.usernameLabel.width - this.options.marginX, this.avatar.height / 2)
+        this.dealerButton.position.set(this.betLabel.x - this.betLabel.width - this.options.marginX, this.options.avatarRadius + this.options.marginX);
 
         if (this.playerState.waiting) {
             this.waiting.lineStyle(4, 0x000000);
             this.waiting.arc(this.options.avatarRadius, this.options.avatarRadius, this.options.avatarRadius, 0, Math.PI);
             this.waiting.position.set(this.avatar.position.x + this.options.avatarRadius, this.avatar.position.y + this.options.avatarRadius)
             this.waiting.pivot.set(this.options.avatarRadius)
+            this.waiting.visible = true;
         } else {
+            this.waiting.visible = false;
             this.waiting.clear();
         }
 

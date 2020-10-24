@@ -44,7 +44,7 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 	var succeededAction events.Action
 	success := false
 	for j := 3; j > 0; j-- {
-		a, err := h.waitForAction(i, preflop)
+		a, err := h.waitForAction(k, preflop)
 		succeededAction = a
 		if err != nil {
 			h.playerError(i, fmt.Sprintf("The action was not valid. %v more tries", j))
@@ -55,7 +55,7 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 			blocking = removeBlocking(blocking, i)
 			success = true
 			succeededAction = events.Action{
-				Action:  a.Action,
+				Action:  events.FOLD,w
 				Payload: a.Payload,
 			}
 			break
@@ -64,11 +64,11 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 		if !preflop && a.Action == events.CHECK {
 			success = true
 			succeededAction = events.Action{
-				Action:  a.Action,
+				Action:  events.CHECK,
 				Payload: a.Payload,
 			}
 			if err == nil {
-				addBlocking(blocking, blocking[i])
+				addBlocking(blocking, k)
 				break
 			}
 		}
@@ -81,11 +81,11 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 				if err == nil {
 					success = true
 					succeededAction = events.Action{
-						Action:  a.Action,
+						Action:  events.RAISE,
 						Payload: amount,
 					}
 					payload = amount
-					addAllButThisBlockgin(blocking, h.Players, blocking[i])
+					addAllButThisBlockgin(blocking, h.Players, k)
 
 					break
 				}
@@ -119,10 +119,8 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 		removeBlocking(blocking, i)
 	}
 
-	log.Printf("Succedded Processing action. sending now, %v, %v, %v", succeededAction.Action, payload, i)
-	utils.SendToAll(h.Players, events.NewActionProcessedEvent(succeededAction.Action, payload, i))
+	utils.SendToAll(h.Players, events.NewActionProcessedEvent(succeededAction.Action, payload, k))
 
-	log.Printf("Send now continueing")
 	time.Sleep(1 * time.Second)
 
 	if !checkIfEmpty(blocking) {
@@ -132,7 +130,7 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 		if blockingLength > len(blocking) {
 			next = i % len(blocking)
 		}
-		log.Printf("next is [%v] in %v", next, blocking)
+		log.Printf("next is [%v] in %v", blocking[next], blocking)
 		// blocking has changed now so the length is different and the
 		h.recAction(blocking, next, preflop)
 	}
@@ -164,7 +162,7 @@ func (h *Hand) playerError(i int, message string) {
 func (h *Hand) actions(preflop bool) {
 
 	var startIndexPlayers int
-	for j := 1; j < len(h.Players); j++ {
+	for j := 1; j <= len(h.Players); j++ {
 		startIndexPlayers = (h.bigBlindIndex + j) % len(h.Players)
 		if h.Players[startIndexPlayers].Active {
 			break
@@ -189,15 +187,16 @@ func (h *Hand) actions(preflop bool) {
 
 func (h *Hand) waitForAction(i int, preflop bool) (events.Action, error) {
 
+	log.Printf("Waiting for Player Action from Player: %v", h.Players[i].String())
+
 	if preflop {
 		utils.SendToAll(h.Players, events.NewWaitForActionEvent(i, 0b111))
 	} else {
 		utils.SendToAll(h.Players, events.NewWaitForActionEvent(i, 0b1111))
 	}
-
-	n := h.Players[i]
-	e := <-n.In
+	e := <-h.Players[i].In
 	action, err := events.ToAction(e)
+	log.Printf("Action received %v with err %v", action, err)
 	if err != nil {
 		return events.Action{}, err
 	}

@@ -14,7 +14,7 @@ class Player extends Container {
             avatarRadius: 20,
             angle: 0,
             fontFamily: "Source Sans Pro",
-            fontSize: "20ref",
+            fontSize: "1.5rem",
             foreground: 0x000000,
             fillAvatar: 0xffffff,
             background: {
@@ -41,9 +41,11 @@ class Player extends Container {
         this.loadingR = 5;
         this.loadingRR = true;
 
+        this.dealerButton = new Graphics();
+
         this.topRow = new Container();
 
-        this.topRow.addChild(this.avatar, this.usernameLabel, this.loading, this.betLabel)
+        this.topRow.addChild(this.avatar, this.usernameLabel, this.loading, this.betLabel, this.dealerButton)
 
         this.addChild(this.background, this.topRow, this.board);
 
@@ -74,6 +76,12 @@ class Player extends Container {
 
         this.calcWidth = this.options.width - this.options.marginX * 2;
 
+        this.dealerButton.clear()
+        this.dealerButton.lineStyle(1, 0xff0000, 1);
+        this.dealerButton.beginFill(0xffff00)
+        this.dealerButton.drawCircle(0, 0, 12)
+        this.dealerButton.endFill();
+
 
         this.usernameLabel.text = this.options.username
         this.usernameLabel.style = {
@@ -99,10 +107,12 @@ class Player extends Container {
         this.board.pushOrUpdate(this.options.cards);
 
 
-        this.board.position.set((this.calcWidth / 2) - (this.board.width / 2) + this.options.marginX, this.avatar.height + 2 * this.options.marginY);
+        this.board.position.set((this.calcWidth / 2) - (this.board.width / 2) + this.options.marginX, this.options.avatarRadius + 3 * this.options.marginY);
         this.avatar.position.set(this.options.marginX, this.options.marginY);
-        this.usernameLabel.position.set(this.calcWidth - this.options.avatarRadius, this.avatar.height / 2)
-        this.betLabel.position.set(this.calcWidth - this.options.avatarRadius - this.usernameLabel.width, this.avatar.height / 2)
+        this.usernameLabel.position.set(this.calcWidth - this.options.avatarRadius, this.options.avatarRadius + this.options.marginY)
+        this.betLabel.position.set(this.calcWidth - this.options.avatarRadius - this.usernameLabel.width, this.options.avatarRadius + this.options.marginY)
+
+        this.dealerButton.position.set(this.calcWidth - this.options.avatarRadius - this.usernameLabel.width - this.betLabel.width - this.options.marginX, this.options.avatarRadius + this.options.marginY)
 
         if (this.options.loading) {
             this.loading.lineStyle(4, 0x000000);
