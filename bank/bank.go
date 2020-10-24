@@ -44,14 +44,10 @@ func (b *Bank) PlayerBet(id string, amount int) error {
 		return errors.New("Player not registered in bank")
 	}
 
-	log.Printf("player was found")
-
 	if playerValue < amount {
 		log.Printf("The player %v does not have the capacity to bet %v ", id, amount)
 		return fmt.Errorf("The player does not have the capacity to bet %v ", amount)
 	}
-
-	log.Printf("Max bet is %v, with player betting %v", b.Round.MaxBet, amount)
 
 	if amount < b.Round.MaxBet && playerValue != amount {
 
@@ -59,16 +55,12 @@ func (b *Bank) PlayerBet(id string, amount int) error {
 		return errors.New("The player has to bet more or equal the round bet or do an all in")
 	}
 
-	log.Printf("Player can bet")
-
 	//player can bet amount
 	b.PlayerValues[id] = b.PlayerValues[id] - amount
 
-	log.Printf("Subtracted amount")
-
 	err := b.Round.PlayerBet(id, amount)
 
-	log.Printf("Bet on the round")
+	log.Printf("Bet success")
 
 	return err
 }

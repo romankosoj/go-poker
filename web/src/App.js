@@ -17,29 +17,33 @@ class App extends React.Component {
       joined: false,
       loader: Loader.shared,
       gameStarted: true,
+      possibleActions: 0,
     }
   }
 
-  componentDidMount(){
+  componentDidMount() {
     this.state.loader.add("textures/cards.json");
   }
 
-  start(cred){
+  start(cred) {
     let gameState = new GameState();
+    gameState.onPossibleAction = (acitons) => {
+      this.setState({ possibleActions: acitons })
+    }
     let game = new Game(gameState, cred, () => {
-      this.setState({joined: false});
+      this.setState({ joined: false });
     });
     game.start();
-    this.setState({game: game});
-    this.setState({joined: true});
+    this.setState({ game: game });
+    this.setState({ joined: true });
 
     game.started.then(() => {
       console.log("Game started in app");
-      this.setState({gameStarted: true});
+      this.setState({ gameStarted: true });
     });
   }
 
-  onJoin(values){
+  onJoin(values) {
     console.log(values);
     this.start(values);
   }
@@ -48,12 +52,12 @@ class App extends React.Component {
     return (
       <div className="App" >
         {
-          this.state.joined 
-          ? <div>
-              <Action game={this.state.game}></Action>
+          this.state.joined
+            ? <div>
+              <Action game={this.state.game} possibleActions={this.state.possibleActions}></Action>
               <View game={this.state.game} loader={this.state.loader}></View>
             </div>
-          : <Join onJoin={this.onJoin.bind(this)}></Join>
+            : <Join onJoin={this.onJoin.bind(this)}></Join>
         }
       </div>
     );

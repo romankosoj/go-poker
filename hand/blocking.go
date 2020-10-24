@@ -34,11 +34,12 @@ func addBlocking(blocking []int, k int) error {
 	return nil
 }
 
-func addAllButThisBlockgin(blocking []int, players []models.Player, k int) {
+func addAllButThisBlockgin(blocking []int, players []models.Player, k int) []int {
 	blocking = nil
 	for i := range players {
 		if i != k && players[i].Active {
 			blocking = append(blocking, i)
 		}
 	}
+	return blocking
 }

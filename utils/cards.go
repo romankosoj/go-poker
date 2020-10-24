@@ -49,6 +49,5 @@ func (s *CardGenerator) SelectRandom() models.Card {
 		s.Cards[51-s.SelectedCards], s.Cards[i] = c, s.Cards[51-s.SelectedCards]
 		s.SelectedCards++
 	}
-	log.Printf("Random card: %v", c)
 	return c
 }

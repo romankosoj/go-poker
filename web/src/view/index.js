@@ -65,7 +65,7 @@ class View extends React.Component {
             }
         }
         if (event === UpdateEvents.dealer) {
-            if (this.players) {
+            if (this.players && this.players.length > data + 1) {
                 this.players[data].updateFromState();
             }
         }
