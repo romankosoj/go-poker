@@ -34,6 +34,8 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 
 	k := blocking[i]
 
+	log.Printf("Player fix")
+
 	if k < 0 || !h.Players[k].Active {
 		log.Printf("player inactive")
 		h.recAction(blocking, (i+1)%blockingLength, preflop)
@@ -55,7 +57,7 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 			blocking = removeBlocking(blocking, i)
 			success = true
 			succeededAction = events.Action{
-				Action:  events.FOLD,w
+				Action:  events.FOLD,
 				Payload: a.Payload,
 			}
 			break
