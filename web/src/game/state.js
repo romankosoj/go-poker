@@ -120,7 +120,7 @@ class GameState {
                 player.lastAction = action;
                 player.isLastAction = true;
                 if (action.action === FOLD) {
-                    player.In = false;
+                    player.in = false;
                 }
                 if (action.action === BET || action.action === RAISE) {
                     this.state.players[e.data.position].bet = action.amount;

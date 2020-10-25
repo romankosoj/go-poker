@@ -17,11 +17,13 @@ type Lobby struct {
 	PlayerLeaves func(string) error
 	MinBuyIn     int
 	MaxBuyIn     int
+	ToRemove     []int
 }
 
 func NewLobby() *Lobby {
 	return &Lobby{
-		Players: make([]models.Player, 0),
+		Players:  make([]models.Player, 0),
+		ToRemove: make([]int, 0),
 	}
 }
 
@@ -66,9 +68,13 @@ func (l *Lobby) RemovePlayerByID(id string) error {
 }
 
 func (l *Lobby) RemovePlayer(i int) error {
-	//Keep order so that the next dealer is choosen correctly.
-	l.Players = append(l.Players[:i], l.Players[i+1:]...)
-	l.Callback()
+	if l.GameStarted {
+		l.ToRemove = append(l.ToRemove, i)
+	} else {
+		//Keep order so that the next dealer is choosen correctly.
+		l.Players = append(l.Players[:i], l.Players[i+1:]...)
+		l.Callback()
+	}
 	return nil
 }
 
@@ -90,7 +96,8 @@ func (l *Lobby) Start() {
 
 	// SETUP
 	dealer := -1
-	for l.GameStarted {
+	for len(l.Players) > 2 {
+		log.Printf("Game started")
 
 		for i := range l.Players {
 			l.Players[i].Active = true
@@ -98,24 +105,27 @@ func (l *Lobby) Start() {
 
 		time.Sleep(1 * time.Second)
 
-		log.Printf("Game started")
 		bank := bank.NewBank(l.Players)
-
-		log.Printf("Bank created")
 
 		hand := hand.NewHand(l.Players, bank, dealer)
 		l.PlayerLeaves = func(id string) error {
-			err := bank.RemovePlayer(id)
-			if err != nil {
-				return err
-			}
-			err = hand.PlayerLeaves(id)
+			err := hand.PlayerLeaves(id)
 			return err
 		}
-		hand.EndCallback = func(dealer int) {
-			l.GameStarted = false
-		}
 		dealer = hand.Start()
-	}
+		l.GameStarted = false
+		if len(l.ToRemove) < 1 {
+			l.RemoveAfterGame(bank)
+		}
 
+	}
+}
+
+//RemoveAfterGame removes the left players from the lobby after a game has finished. During a game the player is counted as folded.
+func (l *Lobby) RemoveAfterGame(bank *bank.Bank) {
+	for _, i := range l.ToRemove {
+		bank.RemovePlayer(l.Players[i].ID)
+		l.Players = append(l.Players[:i], l.Players[i+1:]...)
+		l.Callback()
+	}
 }

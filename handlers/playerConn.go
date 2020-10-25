@@ -50,11 +50,8 @@ func (p *PlayerConn) reader() {
 			continue
 		}
 
-		log.Printf("Got Event %v", event)
-
 		select {
 		case p.In <- event:
-			log.Printf("Chanelling Event %v", event)
 		default:
 		}
 

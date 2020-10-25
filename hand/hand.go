@@ -34,7 +34,7 @@ func NewHand(players []models.Player, bank *bank.Bank, previousDealer int) *Hand
 	var dealer int
 	if previousDealer < 0 {
 		l := rand.Intn(len(players))
-		log.Printf("Dealer choosen random %v %d", len(players), l)
+		log.Printf("Dealer choosen random %d", l)
 		dealer = l
 	} else {
 		dealer = (previousDealer + 1) % len(players)

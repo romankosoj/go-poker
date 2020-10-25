@@ -25,7 +25,11 @@ func (h *Hand) holeCards() {
 
 func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 
-	blockingLength := len(blocking)
+	if h.InCount < 2 {
+		return
+	}
+
+	removed := false
 	// Check if blocking is an empty list
 	if checkIfEmpty(blocking) {
 		log.Printf("Anchor hit")
@@ -38,7 +42,7 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 
 	if k < 0 || !h.Players[k].Active {
 		log.Printf("player inactive")
-		h.recAction(blocking, (i+1)%blockingLength, preflop)
+		h.recAction(blocking, (i+1)%len(blocking), preflop)
 		return
 	}
 
@@ -55,6 +59,7 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 		if a.Action == events.FOLD {
 			h.fold(h.Players[k].ID)
 			blocking = removeBlocking(blocking, i)
+			removed = true
 			success = true
 			succeededAction = events.Action{
 				Action:  events.FOLD,
@@ -87,8 +92,8 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 						Payload: amount,
 					}
 					payload = amount
-					addAllButThisBlockgin(blocking, h.Players, k)
-
+					blocking = addAllButThisBlockgin(blocking, h.Players, k)
+					removed = true
 					break
 				}
 				h.playerError(i, fmt.Sprintf("Raise must be higher than the highest bet. %v more tries", j))
@@ -104,6 +109,7 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 					Payload: a.Payload,
 				}
 				blocking = removeBlocking(blocking, i)
+				removed = true
 				payload = h.Bank.Round.MaxBet
 				break
 			}
@@ -119,6 +125,7 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 		}
 		h.fold(h.Players[k].ID)
 		removeBlocking(blocking, i)
+		removed = true
 	}
 
 	utils.SendToAll(h.Players, events.NewActionProcessedEvent(succeededAction.Action, payload, k))
@@ -129,7 +136,7 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 		log.Printf("Blocking is not empty")
 
 		next := (i + 1) % len(blocking)
-		if blockingLength > len(blocking) {
+		if removed {
 			next = i % len(blocking)
 		}
 		log.Printf("next is [%v] in %v", blocking[next], blocking)
@@ -137,24 +144,25 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 		h.recAction(blocking, next, preflop)
 	}
 
-	log.Printf("Done now leaving")
+	log.Printf("Action Round is finished")
 
 	return
 
 }
 
-func (h *Hand) fold(id string) {
+func (h *Hand) fold(id string) error {
 	i, err := h.searchByActiveID(id)
 
 	log.Printf("folding player %v", id)
 
 	if err != nil {
 		log.Printf("Error during Folding Player[%v]: %v", i, err)
-		return
+		return err
 	}
 
 	h.Players[i].Active = false
 	h.InCount--
+	return nil
 }
 
 func (h *Hand) playerError(i int, message string) {
@@ -182,9 +190,9 @@ func (h *Hand) actions(preflop bool) {
 		}
 	}
 	log.Printf("Blocking: %v", blocking)
-	log.Printf("Starting with [%v] bigBlind: [%v]", startIndexBlocking, h.bigBlindIndex)
+	log.Printf("Starting with [%v] bigBlind: [%v]", startIndexBlocking%len(blocking), h.bigBlindIndex)
 
-	h.recAction(blocking, startIndexBlocking, preflop)
+	h.recAction(blocking, startIndexBlocking%len(blocking), preflop)
 }
 
 func (h *Hand) waitForAction(i int, preflop bool) (events.Action, error) {
@@ -209,15 +217,21 @@ func (h *Hand) PlayerLeaves(id string) error {
 
 	log.Printf("Player Leave invoked")
 
-	n, i, err := utils.SearchByID(h.Players, id)
+	_, i, err := utils.SearchByID(h.Players, id)
 
 	if err != nil {
 		return err
 	}
 
-	utils.SendToAll(h.Players, models.NewEvent(events.PLAYER_LEAVES, events.NewPlayerLeavesEvent(n, i)))
+	err = h.fold(id)
 
-	if len(h.Players) < 3 {
+	if err != nil {
+		return err
+	}
+
+	utils.SendToAll(h.Players, events.NewActionProcessedEvent(events.FOLD, 0, i))
+
+	if len(h.Players) < 2 {
 		h.End()
 	}
 

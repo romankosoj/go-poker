@@ -40,6 +40,7 @@ class Player extends Container {
             paddingCardX: 5,
         });
         this.background = new Graphics();
+        this.activeBackground = new Graphics();
         this.waiting = new Graphics();
         this.waitingVelocity = this.options.waitingAnimationVelocity;
         this.waitingAnimeDir = true;
@@ -48,7 +49,7 @@ class Player extends Container {
 
         this.topRow = new Container()
         this.topRow.addChild(this.avatar, this.usernameLabel, this.betLabel, this.dealerButton, this.waiting);
-        this.addChild(this.background, this.topRow, this.board);
+        this.addChild(this.background, this.topRow, this.board, this.activeBackground);
 
         this.update(options)
     }
@@ -129,10 +130,22 @@ class Player extends Container {
             this.waiting.clear();
         }
 
+
+
         this.background.clear();
         this.background.beginFill(this.options.background.value, this.options.background.alpha);
         this.background.drawRoundedRect(0, 0, this.options.width, this.topRow.height + 3 * this.options.marginY + this.board.height, 10);
         this.background.endFill();
+
+        if (!this.playerState.in) {
+            this.background.clear();
+            this.background.beginFill(0x000000, 0.25);
+            this.background.drawRoundedRect(0, 0, this.options.width, this.topRow.height + 3 * this.options.marginY + this.board.height, 10);
+            this.background.endFill();
+            this.activeBackground.visible = true;
+        } else {
+            this.activeBackground.visible = false;
+        }
 
         this.onResize();
 
@@ -145,7 +158,7 @@ class Player extends Container {
     updateFromState() {
         this.playerState = this.state.getPlayerState(this.index);
         this.update({});
-        console.log("Waiting for player ?:", this.playerState.waiting, " [", this.index, "]");
+        console.log("Player active ?:", this.playerState.in, " [", this.index, "]");
     }
 }
 

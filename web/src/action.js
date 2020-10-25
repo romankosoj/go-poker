@@ -3,10 +3,13 @@ import React from "react"
 const { PLAYER_ACTION } = require("./events/constants")
 
 class Action extends React.Component {
-    constructor(props){
+    constructor(props) {
         super(props);
-        this.game = props.game 
-        this.state = {raise: 0};
+        this.game = props.game
+        this.state = { 
+            raise: 0,  
+            
+        };
         this.handleChange = this.handleChange.bind(this);
         this.fold = this.fold.bind(this);
         this.call = this.call.bind(this);
@@ -15,38 +18,46 @@ class Action extends React.Component {
     }
 
     fold() {
-        this.game.send({event: PLAYER_ACTION, data: {
-            action: 1,
-            payload: 0
-        }})
+        this.game.send({
+            event: PLAYER_ACTION, data: {
+                action: 1,
+                payload: 0
+            }
+        })
     }
 
     call() {
-        this.game.send({event: PLAYER_ACTION, data: {
-            action: 2,
-            payload: 0,
-        }})
+        this.game.send({
+            event: PLAYER_ACTION, data: {
+                action: 2,
+                payload: 0,
+            }
+        })
     }
 
-    check(){
-        this.game.send({event: PLAYER_ACTION, data: {
-            action: 4,
-            payload: 0,
-        }})
+    check() {
+        this.game.send({
+            event: PLAYER_ACTION, data: {
+                action: 4,
+                payload: 0,
+            }
+        })
     }
 
-    raise(){
-        this.game.send({event: PLAYER_ACTION, data: {
-            action: 3,
-            payload: this.state.raise,
-        }})
+    raise() {
+        this.game.send({
+            event: PLAYER_ACTION, data: {
+                action: 3,
+                payload: this.state.raise,
+            }
+        })
     }
 
-    handleChange(e){
-        this.setState({raise: e.target.value});
+    handleChange(e) {
+        this.setState({ raise: parseInt(e.target.value) });
     }
 
-    render(){
+    render() {
         return (
             <div>
                 <button onClick={this.fold}>FOLD</button>
