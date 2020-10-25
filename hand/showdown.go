@@ -50,10 +50,30 @@ func (h *Hand) RankSpecificHand(cards []models.Card) uint16{
 				lP2 = lP1
 				lP1 = open
 			} else if open > lp2 {
-				
+				lP2 = open
+			} else {
+				over = open
+			}
+
+			if over != -1 {
+				validStates = validStates & 0b100100011
 			}
 		}
+	}
 
+	open := normalizeAce(cards[1].Value)
+	r := open - cards
+
+	if r < -4 || r > 4 {
+		validStates = validStates & 0b011101111
+	}
+
+	if cards[0].Color == cards[1].Color {
+		validStates = validStates & 0b011011111
+	}
+
+	for i := 0; i < ; i++ {
+		
 	}
 
 }
