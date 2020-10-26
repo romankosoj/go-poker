@@ -11,6 +11,7 @@ type JoinEvent struct {
 	Username string `json:"username" mapstructure:"username"`
 	ID       string `json:"id" mapstructure:"id"`
 	BuyIn    int    `json:"buyin" mapstructure:"buyin"`
+	LobbyID  string `json:"lobbyID"`
 }
 
 func ToJoinEvent(raw *models.Event) (*JoinEvent, error) {
@@ -24,9 +25,31 @@ func ToJoinEvent(raw *models.Event) (*JoinEvent, error) {
 	return event, err
 }
 
+type JoinSuccess struct {
+	LobbyID     string          `json:"lobbyId" mapstructure:"lobbyId"`
+	Players     []models.Player `json:"players" mapstructure:"players"`
+	GameStarted bool            `json:"gameStarted" mapstructure:"gameStarted"`
+	MaxBuyIn    int             `json:"maxBuyIn"`
+	MinBuyIn    int             `json:"minBuyIn"`
+	BigBlind    int             `json:"bigBlind"`
+	Position    int             `json:"position" mapstructure:"position"`
+}
+
+func NewJoinSuccessEvent(lobbyId string, players []models.Player, gameStarted bool, position, maxBuyIn, minBuyIn, bigBlind int) *models.Event {
+	return models.NewEvent(JOIN_SUCCESS, &JoinSuccess{
+		LobbyID:     lobbyId,
+		Players:     players,
+		GameStarted: gameStarted,
+		MaxBuyIn:    maxBuyIn,
+		MinBuyIn:    minBuyIn,
+		BigBlind:    bigBlind,
+		Position:    position,
+	})
+}
+
 type PlayerLeavesEvent struct {
 	Player *models.PublicPlayer `json:"player"`
-	Index  int                  `index`
+	Index  int                  `json:"index"`
 }
 
 func NewPlayerLeavesEvent(player *models.Player, i int) *PlayerLeavesEvent {

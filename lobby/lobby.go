@@ -6,22 +6,27 @@ import (
 	"time"
 
 	"github.com/JohnnyS318/go-poker/bank"
+	"github.com/JohnnyS318/go-poker/events"
 	"github.com/JohnnyS318/go-poker/hand"
 	"github.com/JohnnyS318/go-poker/models"
+	"github.com/JohnnyS318/go-poker/utils"
 )
 
 type Lobby struct {
+	LobbyID      string          `json:"lobbyId"`
 	Players      []models.Player `json:"players"`
 	GameStarted  bool
 	Callback     func()
 	PlayerLeaves func(string) error
 	MinBuyIn     int
 	MaxBuyIn     int
+	Blinds       int
 	ToRemove     []int
 }
 
 func NewLobby() *Lobby {
 	return &Lobby{
+		LobbyID:  GenerateLobbyID(),
 		Players:  make([]models.Player, 0),
 		ToRemove: make([]int, 0),
 	}
@@ -31,9 +36,12 @@ func (l *Lobby) JoinPlayer(player *models.Player) error {
 	log.Printf("Player joined lobby %v", player)
 
 	if len(l.Players) <= 10 {
+		i := len(l.Players)
 		l.Players = append(l.Players, *player)
 
 		log.Printf("Player count in join lobby %v", len(l.Players))
+
+		utils.SendToPlayer(player, events.NewJoinSuccessEvent(l.LobbyID, l.Players, l.GameStarted, i, l.MaxBuyIn, l.MinBuyIn, l.Blinds))
 
 		player.Out <- models.NewEvent("JOIN_LOBBY", "Yeah").ToRaw()
 
