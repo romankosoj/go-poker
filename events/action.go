@@ -37,8 +37,8 @@ func ToAction(raw *models.Event) (*Action, error) {
 }
 
 type WaitForActionEvent struct {
-	Position        int  `json:"position"`
-	PossibleActions byte `json:"possibleActions"`
+	Position        int  `json:"position" mapstructure:"position"`
+	PossibleActions byte `json:"possibleActions" mapstructure:"possibleActions"`
 }
 
 // NewWaitForAction is an event that the server is waiting for an action from a given player. The possible actions range from 0001 = Fold | 0010=Bet | 0100=Raise | 1000=Check to 1111=All

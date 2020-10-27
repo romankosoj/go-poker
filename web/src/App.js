@@ -25,11 +25,14 @@ class App extends React.Component {
     this.state.loader.add("textures/cards.json");
   }
 
+  possibleActionsChange(actions) {
+    console.log("Action passthrough: ", actions)
+    this.setState({ possibleActions: actions })
+  }
+
   start(cred) {
     let gameState = new GameState();
-    gameState.onPossibleAction = (acitons) => {
-      this.setState({ possibleActions: acitons })
-    }
+    gameState.setOnPossibleActions(this.possibleActionsChange.bind(this))
     let game = new Game(gameState, cred, () => {
       this.setState({ joined: false });
     });
@@ -54,7 +57,7 @@ class App extends React.Component {
         {
           this.state.joined
             ? <div>
-              <Action game={this.state.game} possibleActions={this.state.possibleActions}></Action>
+              <Action game={this.state.game} actions={this.state.possibleActions}></Action>
               <View game={this.state.game} loader={this.state.loader}></View>
             </div>
             : <Join onJoin={this.onJoin.bind(this)}></Join>
