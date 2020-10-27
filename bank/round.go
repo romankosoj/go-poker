@@ -1,6 +1,9 @@
 package bank
 
-import "errors"
+import (
+	"errors"
+	"log"
+)
 
 type Round struct {
 	PlayerBets map[string]int
@@ -21,8 +24,17 @@ func NewRound(players map[string]int) *Round {
 	}
 }
 
-func (r *Round) Conclude() {
-	return
+func (r *Round) Conclude(winners []string) error {
+
+	// transact pot to winners equaly
+
+	share := r.Pot / len(winners)
+
+	for _, n := range winners {
+		log.Printf("User [%v] wins share %v ", n, share)
+	}
+
+	return nil
 }
 
 func (r *Round) PlayerBet(id string, amount int) error {

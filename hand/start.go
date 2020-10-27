@@ -73,9 +73,16 @@ func (h *Hand) Start() int {
 		log.Printf("Showdown")
 	})
 
+	var winners []string
 	h.WhileNotEnded(func() {
-		h.showdown()
+		winners = h.showdown()
 	})
+
+	err := h.Bank.Round.Conclude(winners)
+
+	if err != nil {
+		log.Fatalf("Server error during round conclusion")
+	}
 
 	return h.Dealer
 }
