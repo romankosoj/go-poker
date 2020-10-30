@@ -13,23 +13,44 @@ import (
 )
 
 type Lobby struct {
-	LobbyID      string          `json:"lobbyId"`
-	Players      []models.Player `json:"players"`
-	GameStarted  bool
-	Callback     func()
-	PlayerLeaves func(string) error
-	MinBuyIn     int
-	MaxBuyIn     int
-	Blinds       int
-	ToRemove     []int
+	LobbyID              string          `json:"lobbyId"`
+	Players              []models.Player `json:"players"`
+	GameStarted          bool
+	PlayerLeavesChannel  chan string
+	PlayerLeaves         func(string) error
+	MinBuyIn             int
+	MaxBuyIn             int
+	Blinds               int
+	ToRemove             []int
+	LobbyManagerCapacity map[string]int
+	PlayerQueue          []*models.Player
 }
 
-func NewLobby() *Lobby {
+func NewLobby(c chan string) *Lobby {
 	return &Lobby{
-		LobbyID:  GenerateLobbyID(),
-		Players:  make([]models.Player, 0),
-		ToRemove: make([]int, 0),
+		LobbyID:             GenerateLobbyID(),
+		Players:             make([]models.Player, 0),
+		ToRemove:            make([]int, 0),
+		PlayerLeavesChannel: c,
+		PlayerQueue:         make([]*models.Player, 0),
 	}
+}
+
+func (l *Lobby) EnqueuePlayer(player *models.Player) {
+	l.PlayerQueue = append(l.PlayerQueue, player)
+}
+
+func (l *Lobby) DequeuePlayer() bool {
+	if len(l.PlayerQueue) > 0 {
+		if len(l.Players) < 10 {
+			player := l.PlayerQueue[0]
+			l.Players = append(l.Players, *player)
+			l.PlayerQueue = l.PlayerQueue[1:]
+			return true
+		}
+	}
+
+	return false
 }
 
 func (l *Lobby) JoinPlayer(player *models.Player) error {
@@ -81,7 +102,11 @@ func (l *Lobby) RemovePlayer(i int) error {
 	} else {
 		//Keep order so that the next dealer is choosen correctly.
 		l.Players = append(l.Players[:i], l.Players[i+1:]...)
-		l.Callback()
+
+		// Non blocking channel send (possibly nobody was listening for a player leaves and we have to continue)
+		select {
+		case l.PlayerLeavesChannel <- l.LobbyID:
+		}
 	}
 	return nil
 }
@@ -134,6 +159,5 @@ func (l *Lobby) RemoveAfterGame(bank *bank.Bank) {
 	for _, i := range l.ToRemove {
 		bank.RemovePlayer(l.Players[i].ID)
 		l.Players = append(l.Players[:i], l.Players[i+1:]...)
-		l.Callback()
 	}
 }

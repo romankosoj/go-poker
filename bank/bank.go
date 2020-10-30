@@ -28,9 +28,13 @@ func NewBank(players []models.Player) *Bank {
 	}
 }
 
-func (b *Bank) ResetRound() {
-	b.Round.Conclude()
+func (b *Bank) ResetRound(winners []string) error {
+	err := b.Round.Conclude(winners)
+	if err != nil {
+		return err
+	}
 	b.Round = NewRound(b.PlayerValues)
+	return nil
 }
 
 func (b *Bank) PlayerBet(id string, amount int) error {

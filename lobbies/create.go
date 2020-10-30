@@ -1,27 +1,23 @@
 package lobbies
 
 import (
+	"errors"
 	"log"
 
 	"github.com/JohnnyS318/go-poker/lobby"
 )
 
-func (l *LobbyManager) CreateNew(c chan int) int {
+func (l *LobbyManager) CreateNew(c chan string) (string, error) {
 
 	le := len(l.Lobbies)
 	if le >= l.MaxCount {
-		return -1
+		return "", errors.New("Maximum Lobby count already passed")
 	}
 
-	lobby := lobby.NewLobby()
-	lobby.Callback = func() {
-		c <- le
-	}
+	lobby := lobby.NewLobby(c)
 
-	// lobbies can still be created
-	l.Lobbies = append(l.Lobbies, *lobby)
+	l.Lobbies[lobby.LobbyID] = lobby
+	log.Printf("Created new lobby [%v]", lobby.LobbyID)
 
-	log.Printf("Created new lobby %v", le)
-
-	return le
+	return lobby.LobbyID, nil
 }

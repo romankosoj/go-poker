@@ -1,12 +1,12 @@
 package lobbies
 
-func (l *LobbyManager) Search() []int {
+func (l *LobbyManager) Search() []string {
 
-	a := make([]int, 0)
+	a := make([]string, 0)
 
-	for i, n := range l.Lobbies {
-		if n.HasCapacaty() {
-			a = append(a, i)
+	for k, v := range l.Lobbies {
+		if v.HasCapacaty() {
+			a = append(a, k)
 		}
 	}
 	return a

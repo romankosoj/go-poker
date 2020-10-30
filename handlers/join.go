@@ -53,7 +53,7 @@ func (h *Lobby) Join(rw http.ResponseWriter, r *http.Request) {
 
 	player := models.NewPlayer(joinEvent.Username, joinEvent.ID, joinEvent.BuyIn, playerConn.In, playerConn.Out)
 
-	lobby, _, err := h.Lobbies.ManagePlayer(player)
+	lobby, err := h.Lobbies.ManagePlayer(player, joinEvent)
 
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusBadGateway)

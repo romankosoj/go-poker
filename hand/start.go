@@ -78,7 +78,7 @@ func (h *Hand) Start() int {
 		winners = h.showdown()
 	})
 
-	err := h.Bank.Round.Conclude(winners)
+	err := h.Bank.ResetRound(winners)
 
 	if err != nil {
 		log.Fatalf("Server error during round conclusion")

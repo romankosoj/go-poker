@@ -1,87 +1,106 @@
 package lobbies
 
 import (
+	"errors"
 	"log"
-	"time"
 
+	"github.com/JohnnyS318/go-poker/events"
 	"github.com/JohnnyS318/go-poker/lobby"
 	"github.com/JohnnyS318/go-poker/models"
 )
 
 type LobbyManager struct {
-	Lobbies  []lobby.Lobby `json:"lobbies"`
-	MaxCount int
+	Lobbies     map[string]*lobby.Lobby
+	Capacity    map[string]int
+	MaxCount    int
+	PlayerQueue *PlayerQueue
 }
 
 func NewManager(maxCount int) *LobbyManager {
 	return &LobbyManager{
-		Lobbies:  make([]lobby.Lobby, 0),
-		MaxCount: maxCount,
+		Lobbies:     make(map[string]*lobby.Lobby),
+		MaxCount:    maxCount,
+		Capacity:    make(map[string]int),
+		PlayerQueue: NewPlayerQueue(),
 	}
 }
 
-func (l *LobbyManager) ManagePlayer(player *models.Player) (lobby.Lobby, int, error) {
+func (l *LobbyManager) ManagePlayer(player *models.Player, event *events.JoinEvent) (*lobby.Lobby, error) {
 
-	// Search for a existing lobby
-	a := l.Search()
+	if event.LobbyID == "" {
+		// No Lobby was specified so the a lobby has to be searched for the player
 
-	log.Printf("found lobbies %v", a)
+		// Search for a existing lobby
+		a := l.Search()
 
-	for _, i := range a {
-		lob, ind, err := l.JoinPlayer(i, player)
-		if err == nil {
-			return lob, ind, nil
+		log.Printf("Found lobbies %v", a)
+
+		for _, id := range a {
+			lobby := l.Lobbies[id]
+			err := l.Join(lobby, player)
+			if err == nil {
+				return lobby, nil
+			}
+			log.Printf("Error during lobby joining %v", err)
 		}
-		log.Printf("Error during joining %v", err)
+
+		c := make(chan string)
+
+		// No lobby fits so create a new one
+		//
+		id, err := l.CreateNew(c)
+
+		if err == nil {
+			lobby := l.Lobbies[id]
+			err := l.Join(lobby, player)
+
+			if err == nil {
+				return lobby, nil
+			}
+		}
+
+		log.Printf("Waiting for empty lobby")
+
+		// No new lobby can be crated, due to this we have to wait until a player leaves a given lobby.
+		// We register in a single line queue to
+		l.PlayerQueue.Enqueue(player, event.ID)
+		id = <-c
+
+		lobby := l.Lobbies[id]
+
+		err = l.Join(lobby, player)
+
+		if err != nil {
+			return nil, errors.New("Joining after waiting was unsuccessfull")
+		}
+		return lobby, nil
+
+	}
+	lobby, ok := l.Lobbies[event.ID]
+
+	if !ok {
+		return nil, errors.New("The specified LobbyId was invalid or the referenced lobby did not exist")
 	}
 
-	c := make(chan int)
+	if lobby.HasCapacaty() {
+		err := l.Join(lobby, player)
 
-	// No lobby fits so create a new one
-	//
-	i := l.CreateNew(c)
-
-	if i >= 0 {
-		return l.JoinPlayer(i, player)
+		if err == nil {
+			return lobby, nil
+		}
 	}
 
-	log.Printf("Waiting for empty lobby")
-
-	// No new lobby can be crated, due to this we have to wait until a player leaves a given lobby.
-	// We register in a single line queue to
-	i = <-c
-	return l.JoinPlayer(i, player)
+	return nil, errors.New("Something went wrong")
 }
 
-func (l *LobbyManager) JoinPlayer(i int, player *models.Player) (lobby.Lobby, int, error) {
+func (l *LobbyManager) Join(lobby *lobby.Lobby, player *models.Player) error {
+	log.Printf("Joining Lobby [%v]", lobby.LobbyID)
+	err := lobby.JoinPlayer(player)
 
-	log.Printf("Joining lobby")
-
-	err := l.Lobbies[i].JoinPlayer(player)
 	if err != nil {
-		return lobby.Lobby{}, -1, err
+		return err
 	}
 
-	log.Printf("Player count %v", len(l.Lobbies[i].Players))
-
-	if len(l.Lobbies[i].Players) > 2 && !l.Lobbies[i].GameStarted {
-
-		time.Sleep(1 * time.Second)
-
-		log.Printf("Starting game now")
-
-		// // create callback that game finished
-		// g := game.Create(l.Lobbies[i].Players, func() {
-		// 	l.Lobbies[i].GameStarted = false
-		// })
-
-		// // create notification that a player left the lobby
-		// l.Lobbies[i].PlayerLeaves = g.PlayerLeaves
-
-		// // Start the game on different go routine (thread) so that multple games can be run simultaneously.
-		// go g.Start()
-
-		go l.Lobbies[i].Start()
-	}
-	return l.Lobbies[i], i, nil
+	log.Printf("Player count %v", len(lobby.Players))
+	return nil
 }

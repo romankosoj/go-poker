@@ -11,7 +11,7 @@ type JoinEvent struct {
 	Username string `json:"username" mapstructure:"username"`
 	ID       string `json:"id" mapstructure:"id"`
 	BuyIn    int    `json:"buyin" mapstructure:"buyin"`
-	LobbyID  string `json:"lobbyID"`
+	LobbyID  string `json:"lobbyID" mapstructure:"lobbyId"`
 }
 
 func ToJoinEvent(raw *models.Event) (*JoinEvent, error) {
