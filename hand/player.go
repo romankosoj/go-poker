@@ -10,17 +10,30 @@ import (
 	"github.com/JohnnyS318/go-poker/utils"
 )
 
-func (h *Hand) holeCards() {
-	for i := range h.Players {
-		if h.Players[i].Active {
-			var cards [2]models.Card
-			cards[0] = h.cardGen.SelectRandom()
-			cards[1] = h.cardGen.SelectRandom()
-			h.HoleCards[h.Players[i].ID] = cards
-			log.Printf("Cards 0:%v 1:%v", cards[0].String(), cards[1].String())
-			utils.SendToPlayer(&h.Players[i], events.NewHoleCardsEvent(cards))
+func (h *Hand) actions(preflop bool) {
+
+	var startIndexPlayers int
+	for j := 1; j <= len(h.Players); j++ {
+		startIndexPlayers = (h.bigBlindIndex + j) % len(h.Players)
+		if h.Players[startIndexPlayers].Active {
+			break
 		}
 	}
+
+	startIndexBlocking := -1
+	blocking := make([]int, 0)
+	for i, n := range h.Players {
+		if n.Active {
+			blocking = append(blocking, i)
+			if startIndexPlayers == i {
+				startIndexBlocking = i
+			}
+		}
+	}
+	log.Printf("Blocking: %v", blocking)
+	log.Printf("Starting with [%v] bigBlind: [%v]", startIndexBlocking%len(blocking), h.bigBlindIndex)
+
+	h.recAction(blocking, startIndexBlocking%len(blocking), preflop)
 }
 
 func (h *Hand) recAction(blocking []int, i int, preflop bool) {
@@ -42,6 +55,9 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 
 	if k < 0 || !h.Players[k].Active {
 		log.Printf("player inactive")
+
+		// remove from blocking list
+
 		h.recAction(blocking, (i+1)%len(blocking), preflop)
 		return
 	}
@@ -150,6 +166,19 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 
 }
 
+func (h *Hand) holeCards() {
+	for i := range h.Players {
+		if h.Players[i].Active {
+			var cards [2]models.Card
+			cards[0] = h.cardGen.SelectRandom()
+			cards[1] = h.cardGen.SelectRandom()
+			h.HoleCards[h.Players[i].ID] = cards
+			log.Printf("Cards 0:%v 1:%v", cards[0].String(), cards[1].String())
+			utils.SendToPlayer(&h.Players[i], events.NewHoleCardsEvent(cards))
+		}
+	}
+}
+
 func (h *Hand) fold(id string) error {
 	i, err := h.searchByActiveID(id)
 
@@ -167,32 +196,6 @@ func (h *Hand) fold(id string) error {
 
 func (h *Hand) playerError(i int, message string) {
 	utils.SendToPlayerInList(h.Players, i, models.NewEvent("INVALID_ACTION", message))
-}
-
-func (h *Hand) actions(preflop bool) {
-
-	var startIndexPlayers int
-	for j := 1; j <= len(h.Players); j++ {
-		startIndexPlayers = (h.bigBlindIndex + j) % len(h.Players)
-		if h.Players[startIndexPlayers].Active {
-			break
-		}
-	}
-
-	startIndexBlocking := -1
-	blocking := make([]int, 0)
-	for i, n := range h.Players {
-		if n.Active {
-			blocking = append(blocking, i)
-			if startIndexPlayers == i {
-				startIndexBlocking = i
-			}
-		}
-	}
-	log.Printf("Blocking: %v", blocking)
-	log.Printf("Starting with [%v] bigBlind: [%v]", startIndexBlocking%len(blocking), h.bigBlindIndex)
-
-	h.recAction(blocking, startIndexBlocking%len(blocking), preflop)
 }
 
 func (h *Hand) waitForAction(i int, preflop bool) (events.Action, error) {

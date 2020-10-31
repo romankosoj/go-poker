@@ -53,6 +53,38 @@ func (l *Lobby) DequeuePlayer() (player *models.Player, ok bool) {
 	return nil, false
 }
 
+func (l *Lobby) Start() {
+	l.GameStarted = true
+
+	log.Printf("Lobby Started")
+
+	// SETUP
+	dealer := -1
+	for len(l.Players) > 2 {
+		log.Printf("Game started")
+
+		for i := range l.Players {
+			l.Players[i].Active = true
+		}
+
+		time.Sleep(10 * time.Second)
+
+		bank := bank.NewBank(l.Players)
+
+		hand := hand.NewHand(l.Players, bank, dealer)
+		l.PlayerLeaves = func(id string) error {
+			err := hand.PlayerLeaves(id)
+			return err
+		}
+		dealer = hand.Start()
+		l.GameStarted = false
+		if len(l.ToRemove) < 1 {
+			l.RemoveAfterGame(bank)
+		}
+
+	}
+}
+
 func (l *Lobby) JoinPlayer(player *models.Player) error {
 	log.Printf("Player joined lobby %v", player)
 
@@ -65,6 +97,10 @@ func (l *Lobby) JoinPlayer(player *models.Player) error {
 		utils.SendToPlayer(player, events.NewJoinSuccessEvent(l.LobbyID, l.Players, l.GameStarted, i, l.MaxBuyIn, l.MinBuyIn, l.Blinds))
 
 		player.Out <- models.NewEvent("JOIN_LOBBY", "Yeah").ToRaw()
+
+		if len(l.Players) > 2 {
+			l.Start()
+		}
 
 		return nil
 	}
@@ -127,36 +163,6 @@ func (l *Lobby) FindPlayerByID(id string) int {
 
 func (l *Lobby) HasCapacaty() bool {
 	return len(l.Players) < 10
-}
-
-func (l *Lobby) Start() {
-	l.GameStarted = true
-
-	// SETUP
-	dealer := -1
-	for len(l.Players) > 2 {
-		log.Printf("Game started")
-
-		for i := range l.Players {
-			l.Players[i].Active = true
-		}
-
-		time.Sleep(1 * time.Second)
-
-		bank := bank.NewBank(l.Players)
-
-		hand := hand.NewHand(l.Players, bank, dealer)
-		l.PlayerLeaves = func(id string) error {
-			err := hand.PlayerLeaves(id)
-			return err
-		}
-		dealer = hand.Start()
-		l.GameStarted = false
-		if len(l.ToRemove) < 1 {
-			l.RemoveAfterGame(bank)
-		}
-
-	}
 }
 
 //RemoveAfterGame removes the left players from the lobby after a game has finished. During a game the player is counted as folded.

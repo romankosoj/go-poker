@@ -6,6 +6,7 @@ import { rW, rH, registerApp, isMobile } from "./utils";
 import PropTypes from 'prop-types';
 import { Game } from "../connection/socket";
 import { UpdateEvents } from "../game/state";
+import { Notification } from "./notifcation";
 
 class View extends React.Component {
     constructor(props) {
@@ -104,7 +105,14 @@ class View extends React.Component {
         this.board.position.set((this.app.renderer.width / 2) - (this.board.width / 2), (this.app.renderer.height / 2) - (this.board.height / 2));
 
 
-        this.app.stage.addChild(this.board);
+        // notification bar
+
+        this.notification = new Notification(this.gameState, this.app.renderer.width, this.app.renderer.height)
+        this.notification.position.set(0, 0)
+
+        this.app.stage.addChild(this.board, this.notification)
+
+        this.notification.reset();
 
         this.updatePlayers();
         this.app.ticker.add(delta => this.gameLoop(delta))

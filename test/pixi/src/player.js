@@ -45,6 +45,7 @@ class Player extends Container {
 
         this.topRow = new Container();
 
+
         this.topRow.addChild(this.avatar, this.usernameLabel, this.loading, this.betLabel, this.dealerButton)
 
         this.addChild(this.background, this.topRow, this.board);
@@ -129,6 +130,8 @@ class Player extends Container {
         this.background.endFill();
 
         this.onResize();
+
+
 
     }
 

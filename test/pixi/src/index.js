@@ -1,5 +1,6 @@
 import * as PIXI from "pixi.js"
 import { Board } from "./board";
+import { Notification } from "./notification";
 import { Player } from "./player";
 import { rW, rH, registerApp, isMobile } from "./utils";
 
@@ -127,6 +128,13 @@ function setup() {
     } else {
         generatePlayers(id, playersState, tableWidth, tableHeight, table.x + tableWidth, table.y + tableHeight);
     }
+
+
+    let notification = new Notification(app.renderer.width, app.renderer.height)
+
+    app.stage.addChild(notification)
+
+    notification.position.set(0, 0)
 
     players[0].update({ loading: true })
     state = play;

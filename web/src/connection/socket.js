@@ -14,7 +14,7 @@ class Game {
         });
     }
 
-    start(){
+    start() {
         console.log(this.state.name);
         this.ws = new WebSocket("ws://localhost:8080/join")
         this.ws.onclose = e => {
@@ -28,13 +28,15 @@ class Game {
                 this.onClose();
                 return
             }
-            
+
             // Join event
             this.ws.send(SendCreateEvent(JOIN, this.credentials));
         };
 
         this.ws.onmessage = e => {
-            this.state.decodeChange(JSON.parse(e.data));
+            if (e.data) {
+                this.state.decodeChange(JSON.parse(e.data));
+            }
         };
 
         this.ws.onerror = e => {
@@ -43,7 +45,7 @@ class Game {
         };
     }
 
-    send(event){
+    send(event) {
         this.ws.send(SendEvent(event));
     }
 }
