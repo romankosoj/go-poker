@@ -1,4 +1,4 @@
-const { GAME_START, DEALER_SET, WAIT_FOR_PLAYER_ACTION, ACTION_PROCESSED, PLAYER_LEAVES, FLOP, TURN, RIVER, GAME_END, HOLE_CARDS } = require("../events/constants");
+const { JOIN_SUCCESS, GAME_START, DEALER_SET, WAIT_FOR_PLAYER_ACTION, ACTION_PROCESSED, PLAYER_LEAVES, FLOP, TURN, RIVER, GAME_END, HOLE_CARDS } = require("../events/constants");
 const { BET, RAISE, FOLD, Action } = require("../models/action");
 const { Player } = require("../models/player");
 
@@ -42,6 +42,16 @@ class GameState {
         const w = this.state.waitingFor;
         console.log(e.event);
         switch (e.event) {
+
+            case JOIN_SUCCESS:
+                this.state.roundState = -2;
+                this.state.players = e.data.position;
+                for (let i = 0; i < e.data.players.length; i++) {
+                    this.state.players.push(new Player(e.data.players[i].username, e.data.players[i].id, 10));
+                }
+                this.state.bigBlind = 
+                break;
+
             case GAME_START:
                 this.state.roundState = -1;
                 this.state.player = e.data.position;
@@ -57,35 +67,6 @@ class GameState {
                 this.state.dealer = e.data;
                 this.onUpdate(UpdateEvents.dealer, e.data);
                 break;
-
-            // case SMALL_BLIND_SET:
-            //     this.state.smallBlind = e.data;
-            //     this.state.players[w].bet = e.data;
-            //     this.state.players[w].lastAction = new Action(BET, w, e.data);
-            //     this.state.waitingFor = -1;
-            //     this.onUpdate(UpdateEvents.player, w);
-            //     break;
-
-            // case BIG_BLIND_SET:
-            //     this.bigBlind = e.data;
-            //     this.state.bigBlind = e.data;
-            //     this.state.players[w].bet = e.data;
-            //     this.state.players[w].lastAction = new Action(RAISE, w, e.data);
-            //     this.state.waitingFor = -1;
-            //     this.onUpdate();
-            //     break;
-
-            // case WAIT_FOR_SMALL_BLIND_SET:
-            //     this.state.waitingFor = e.data;
-            //     this.state.players[e.data].waiting = true;
-            //     this.onUpdate(UpdateEvents.player, e.data);
-            //     break;
-
-            // case WAIT_FOR_BIG_BLIND_SET:
-            //     this.state.waitingFor = e.data;
-            //     this.state.players[e.data].waiting = true;
-            //     this.onUpdate(UpdateEvents.player, e.data);
-            //     break;
 
             case HOLE_CARDS:
                 for (let i = 0; i < this.state.players.length; i++) {

@@ -3,6 +3,7 @@ package lobbies
 import (
 	"errors"
 	"log"
+	"math/rand"
 
 	"github.com/JohnnyS318/go-poker/events"
 	"github.com/JohnnyS318/go-poker/lobby"
@@ -10,18 +11,17 @@ import (
 )
 
 type LobbyManager struct {
-	Lobbies     map[string]*lobby.Lobby
-	Capacity    map[string]int
-	MaxCount    int
-	PlayerQueue *PlayerQueue
+	Lobbies        map[string]*lobby.Lobby
+	Capacity       map[string]int
+	LobbiesIndexed []string
+	MaxCount       int
 }
 
 func NewManager(maxCount int) *LobbyManager {
 	return &LobbyManager{
-		Lobbies:     make(map[string]*lobby.Lobby),
-		MaxCount:    maxCount,
-		Capacity:    make(map[string]int),
-		PlayerQueue: NewPlayerQueue(),
+		Lobbies:  make(map[string]*lobby.Lobby),
+		MaxCount: maxCount,
+		Capacity: make(map[string]int),
 	}
 }
 
@@ -63,8 +63,14 @@ func (l *LobbyManager) ManagePlayer(player *models.Player, event *events.JoinEve
 
 		// No new lobby can be crated, due to this we have to wait until a player leaves a given lobby.
 		// We register in a single line queue to
-		l.PlayerQueue.Enqueue(player, event.ID)
-		id = <-c
+		//l.PlayerQueue.Enqueue(player, event.ID)
+		//id = <-c
+
+		// get a random lobby int64 is faster than a random byte
+		i := rand.Int63() % int64(len(l.Lobbies))
+		name := l.LobbiesIndexed[i]
+		// Enqueue player in the lobby specific queue
+		l.Lobbies[name].EnqueuePlayer(player)
 
 		lobby := l.Lobbies[id]
 

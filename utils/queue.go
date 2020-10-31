@@ -1,4 +1,4 @@
-package lobbies
+package utils
 
 import (
 	"github.com/JohnnyS318/go-poker/models"

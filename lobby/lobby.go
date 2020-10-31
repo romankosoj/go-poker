@@ -40,17 +40,17 @@ func (l *Lobby) EnqueuePlayer(player *models.Player) {
 	l.PlayerQueue = append(l.PlayerQueue, player)
 }
 
-func (l *Lobby) DequeuePlayer() bool {
+func (l *Lobby) DequeuePlayer() (player *models.Player, ok bool) {
 	if len(l.PlayerQueue) > 0 {
 		if len(l.Players) < 10 {
 			player := l.PlayerQueue[0]
 			l.Players = append(l.Players, *player)
 			l.PlayerQueue = l.PlayerQueue[1:]
-			return true
+			return player, true
 		}
 	}
 
-	return false
+	return nil, false
 }
 
 func (l *Lobby) JoinPlayer(player *models.Player) error {
@@ -103,10 +103,15 @@ func (l *Lobby) RemovePlayer(i int) error {
 		//Keep order so that the next dealer is choosen correctly.
 		l.Players = append(l.Players[:i], l.Players[i+1:]...)
 
-		// Non blocking channel send (possibly nobody was listening for a player leaves and we have to continue)
-		select {
-		case l.PlayerLeavesChannel <- l.LobbyID:
+		player, ok := l.DequeuePlayer()
+		if ok {
+			l.JoinPlayer(player)
 		}
+
+		// Non blocking channel send (possibly nobody was listening for a player leaves and we have to continue)
+		//select {
+		//case l.PlayerLeavesChannel <- l.LobbyID:
+		//}
 	}
 	return nil
 }
@@ -159,5 +164,9 @@ func (l *Lobby) RemoveAfterGame(bank *bank.Bank) {
 	for _, i := range l.ToRemove {
 		bank.RemovePlayer(l.Players[i].ID)
 		l.Players = append(l.Players[:i], l.Players[i+1:]...)
+		player, ok := l.DequeuePlayer()
+		if ok {
+			l.JoinPlayer(player)
+		}
 	}
 }
