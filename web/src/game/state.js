@@ -57,6 +57,7 @@ class GameState {
                 for (let i = 0; i < e.data.players.length; i++) {
                     this.state.players.push(new Player(e.data.players[i].username, e.data.players[i].id, 10));
                 }
+                this.onNotification("The game starts soon...", true);
                 break;
 
             case GAME_START:
@@ -147,7 +148,8 @@ class GameState {
 
             case GAME_END:
                 this.state.roundState = 4;
-                this.notification("Game ended. Next game coninues now.", false)
+                console.log("notification request")
+                this.onNotification("Game ended. Next game coninues now.", false)
                 this.onUpdate(UpdateEvents.gameEnd);
                 this.onGameEnd();
                 break;

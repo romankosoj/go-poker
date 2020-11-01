@@ -73,16 +73,27 @@ func (h *Hand) Start() int {
 		log.Printf("Showdown")
 	})
 
-	var winners []string
-	h.WhileNotEnded(func() {
-		winners = h.showdown()
-	})
+	winners := h.showdown()
+	winningPlayers := make([]int, 0)
+	for i := range winners {
+		_, i, err := utils.SearchByID(h.Players, winners[i])
+		if err == nil {
+			winningPlayers = append(winningPlayers, i)
+		}
+	}
+
+	winningPublic := make([]models.PublicPlayer, len(winningPlayers))
+	for i, n := range winningPlayers {
+		winningPublic[i] = publicPlayers[n]
+	}
 
 	err := h.Bank.ResetRound(winners)
 
 	if err != nil {
 		log.Fatalf("Server error during round conclusion")
 	}
+
+	utils.SendToAll(h.Players, events.NewGameEndEvent(winningPublic, h.Bank.Round.Pot/len(winningPublic)))
 
 	return h.Dealer
 }

@@ -94,9 +94,7 @@ func (l *Lobby) JoinPlayer(player *models.Player) error {
 
 		log.Printf("Player count in join lobby %v", len(l.Players))
 
-		utils.SendToPlayer(player, events.NewJoinSuccessEvent(l.LobbyID, l.Players, l.GameStarted, i, l.MaxBuyIn, l.MinBuyIn, l.Blinds))
-
-		player.Out <- models.NewEvent("JOIN_LOBBY", "Yeah").ToRaw()
+		utils.SendToPlayer(player, events.NewJoinSuccessEvent(l.LobbyID, l.Players, l.GameStarted, 0, i, l.MaxBuyIn, l.MinBuyIn, l.Blinds))
 
 		if len(l.Players) > 2 {
 			l.Start()

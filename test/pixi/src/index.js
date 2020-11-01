@@ -2,6 +2,7 @@ import * as PIXI from "pixi.js"
 import { Board } from "./board";
 import { Notification } from "./notification";
 import { Player } from "./player";
+import { Players } from "./players";
 import { rW, rH, registerApp, isMobile } from "./utils";
 
 
@@ -25,9 +26,8 @@ PIXI.Renderer.registerPlugin("interaction", PIXI.InteractionManager);
 
 registerApp(app);
 
-let angles = [];
-let players = [];
 let state;
+let players;
 function setup() {
     let id = app.loader.resources["textures/cards.json"].textures;
 
@@ -121,42 +121,33 @@ function setup() {
         ])
     }, 2000)
 
-    console.log(isMobile());
 
-    if (isMobile()) {
-        generatePlayers(id, playersState, tableWidth - rW(75), tableHeight - rH(65), table.x + tableWidth, table.y + tableHeight);
-    } else {
-        generatePlayers(id, playersState, tableWidth, tableHeight, table.x + tableWidth, table.y + tableHeight);
-    }
+    players = new Players(id, { width: tableWidth, height: tableHeight, x: table.x + tableWidth, y: table.y + tableHeight });
+
+
+    // if (isMobile()) {
+    //     generatePlayers(id, playersState, tableWidth - rW(75), tableHeight - rH(65), table.x + tableWidth, table.y + tableHeight);
+    // } else {
+    //     generatePlayers(id, playersState, tableWidth, tableHeight, table.x + tableWidth, table.y + tableHeight);
+    // }
+
+    players.updatePlayers(playersState)
 
 
     let notification = new Notification(app.renderer.width, app.renderer.height)
 
-    app.stage.addChild(notification)
+    app.stage.addChild(players, notification)
 
     notification.position.set(0, 0)
 
-    players[0].update({ loading: true })
+    players.updatePlayerIndex(0);
     state = play;
     app.ticker.add(delta => gameLoop(delta))
 }
 
-const generatePlayers = (id, playersState, tWidth, tHeight, tX, tY) => {
-    let n = playersState.length
-    let a = 360 / n;
-    for (let i = 0; i < n; i++) {
-        angles.push(a * i * Math.PI / 180);
-        let player = new Player(id, playersState[i], angles[i]);
-        const x = tX + (tWidth + player.width) * Math.cos(angles[i]);
-        const y = tY + (tHeight + player.height) * Math.sin(angles[i]);
-        player.position.set(x, y);
-        players.push(player);
-        app.stage.addChild(player);
-    }
-}
-
 function gameLoop(delta) {
-    players[0].gameLoop(delta)
+    players.gameLoop(delta);
+
 }
 
 function play(delta) {

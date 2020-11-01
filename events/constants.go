@@ -23,7 +23,8 @@ const ACTION_PROCESSED = "ACTION_PROCESSED"
 
 const PLAYER_LEAVES = "PLAYER_LEAVES"
 
-const GAME_END = "GAME_END"
 const FLOP = "FLOP"
 const TURN = "TURN"
 const RIVER = "RIVER"
+
+const GAME_END = "GAME_END"

@@ -22,9 +22,19 @@ function rH(r) {
     return f * app.renderer.height;
 }
 
+function AppWidth() {
+    return app.renderer.width;
+}
+
+function AppHeight() {
+    return app.renderer.height;
+}
+
 export {
     rW,
     rH,
     registerApp,
     isMobile,
+    AppWidth,
+    AppHeight
 }

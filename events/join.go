@@ -29,13 +29,14 @@ type JoinSuccess struct {
 	LobbyID     string          `json:"lobbyId" mapstructure:"lobbyId"`
 	Players     []models.Player `json:"players" mapstructure:"players"`
 	GameStarted bool            `json:"gameStarted" mapstructure:"gameStarted"`
+	GameState   byte            `json:"gameState" mapstructure:"gameState"`
 	MaxBuyIn    int             `json:"maxBuyIn"`
 	MinBuyIn    int             `json:"minBuyIn"`
 	BigBlind    int             `json:"bigBlind"`
 	Position    int             `json:"position" mapstructure:"position"`
 }
 
-func NewJoinSuccessEvent(lobbyId string, players []models.Player, gameStarted bool, position, maxBuyIn, minBuyIn, bigBlind int) *models.Event {
+func NewJoinSuccessEvent(lobbyId string, players []models.Player, gameStarted bool, gameState byte, position, maxBuyIn, minBuyIn, bigBlind int) *models.Event {
 	return models.NewEvent(JOIN_SUCCESS, &JoinSuccess{
 		LobbyID:     lobbyId,
 		Players:     players,

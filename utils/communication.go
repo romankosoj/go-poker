@@ -6,6 +6,7 @@ import "github.com/JohnnyS318/go-poker/models"
 func SendToAll(players []models.Player, event *models.Event) {
 	for i := range players {
 		players[i].Out <- event.ToRaw()
+
 	}
 }
 

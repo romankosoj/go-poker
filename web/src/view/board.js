@@ -4,10 +4,9 @@ import { rW, rH, isMobile } from "./utils";
 
 class Board extends Container {
 
-    constructor(id, options, state) {
+    constructor(state) {
         super();
         this.state = state;
-        this.id = id;
         this.options = {
             paddingX: 20,
             paddingY: 20,
@@ -20,7 +19,11 @@ class Board extends Container {
         this.cards = new Container();
 
         this.addChild(this.background, this.cards);
-        this.update(options);
+    }
+
+    setup(id) {
+        this.id = id;
+        this.update({})
     }
 
     push(card) {

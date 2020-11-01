@@ -19,6 +19,8 @@ class Notification extends Container {
         this.addChild(this.bg, this.textBg, this.text);
 
         this.update(appWidth, appHeight)
+
+        this.visible = false;
     }
 
     update() {
