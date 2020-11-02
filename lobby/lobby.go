@@ -16,8 +16,6 @@ type Lobby struct {
 	LobbyID              string          `json:"lobbyId"`
 	Players              []models.Player `json:"players"`
 	GameStarted          bool
-	PlayerLeavesChannel  chan string
-	PlayerLeaves         func(string) error
 	MinBuyIn             int
 	MaxBuyIn             int
 	Blinds               int
@@ -26,13 +24,12 @@ type Lobby struct {
 	PlayerQueue          []*models.Player
 }
 
-func NewLobby(c chan string) *Lobby {
+func NewLobby() *Lobby {
 	return &Lobby{
-		LobbyID:             GenerateLobbyID(),
-		Players:             make([]models.Player, 0),
-		ToRemove:            make([]int, 0),
-		PlayerLeavesChannel: c,
-		PlayerQueue:         make([]*models.Player, 0),
+		LobbyID:     GenerateLobbyID(),
+		Players:     make([]models.Player, 0),
+		ToRemove:    make([]int, 0),
+		PlayerQueue: make([]*models.Player, 0),
 	}
 }
 
@@ -117,11 +114,6 @@ func (l *Lobby) RemovePlayerByID(id string) error {
 	}
 
 	log.Printf("Game runing ?: [%v]", l.GameStarted)
-
-	if l.GameStarted {
-		log.Printf("PlayerLeave exec")
-		l.PlayerLeaves(id)
-	}
 
 	err := l.RemovePlayer(i)
 

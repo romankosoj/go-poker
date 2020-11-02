@@ -37,8 +37,7 @@ class App extends React.Component {
       this.setState({ joined: false });
     });
     game.start();
-    this.setState({ game: game });
-    this.setState({ joined: true });
+    this.setState({ game: game, joined: true });
 
     game.started.then(() => {
       console.log("Game started in app");
@@ -47,7 +46,6 @@ class App extends React.Component {
   }
 
   onJoin(values) {
-    console.log(values);
     this.start(values);
   }
 

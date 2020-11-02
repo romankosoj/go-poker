@@ -7,14 +7,14 @@ import (
 	"github.com/JohnnyS318/go-poker/lobby"
 )
 
-func (l *LobbyManager) CreateNew(c chan string) (string, error) {
+func (l *LobbyManager) CreateNew() (string, error) {
 
 	le := len(l.Lobbies)
 	if le >= l.MaxCount {
 		return "", errors.New("Maximum Lobby count already passed")
 	}
 
-	lobby := lobby.NewLobby(c)
+	lobby := lobby.NewLobby()
 
 	l.Lobbies[lobby.LobbyID] = lobby
 	log.Printf("Created new lobby [%v]", lobby.LobbyID)
