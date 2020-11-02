@@ -58,6 +58,7 @@ class GameState {
                     this.state.players.push(new Player(e.data.players[i].username, e.data.players[i].id, 10));
                 }
                 this.onNotification("The game starts soon...", true);
+                this.onUpdate(UpdateEvents.lobbyJoin);
                 break;
 
             case GAME_START:
@@ -67,9 +68,7 @@ class GameState {
                     this.state.players.push(new Player(e.data.players[i].username, e.data.players[i].id, 10));
                 }
                 this.onGameStart();
-                setTimeout(() => {
-                    this.onUpdate(UpdateEvents.gameStart);
-                }, 500);
+                this.onUpdate(UpdateEvents.gameStart);
                 break;
             case DEALER_SET:
                 this.state.dealer = e.data;
@@ -173,5 +172,6 @@ export const UpdateEvents = {
     gameEnd: 5,
     dealer: 6,
     playerCards: 7,
+    lobbyJoin: 8,
 
 }

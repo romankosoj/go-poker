@@ -52,6 +52,28 @@ class View extends React.Component {
 
             this.app.stage.addChild(this.table, this.board, this.players, this.notification);
 
+
+            this.tableWidth = rW(375);
+            this.tableHeight = rH(225);
+            if (isMobile()) {
+                this.tableWidth = 85;
+                this.tableHeight = 50;
+            }
+            this.table.beginFill(0x1daf08);
+            this.table.drawEllipse(this.tableWidth, this.tableHeight, this.tableWidth, this.tableHeight)
+            //table.drawRoundedRect(0, 0, this.tableWidth * 2, this.tableHeight * 2, this.tableHeight)
+            this.table.endFill();
+            this.table.position.set(this.app.renderer.width / 2 - this.tableWidth, this.app.renderer.height / 2 - this.tableHeight)
+    
+            this.board.id = this.id;
+            this.board.addCards(3);
+            this.board.update({
+                updatedWidth: () => {
+                    this.board.position.set((this.app.renderer.width / 2) - (this.board.width / 2), (this.app.renderer.height / 2) - (this.board.height / 2));
+                }
+            });
+            this.board.position.set((this.app.renderer.width / 2) - (this.board.width / 2), (this.app.renderer.height / 2) - (this.board.height / 2));
+
         })
     }
 
@@ -80,27 +102,6 @@ class View extends React.Component {
         this.didSetup = true;
         this.id = this.app.loader.resources["textures/cards.json"].textures;
 
-        this.tableWidth = rW(375);
-        this.tableHeight = rH(225);
-        if (isMobile()) {
-            this.tableWidth = 85;
-            this.tableHeight = 50;
-        }
-        this.table.beginFill(0x1daf08);
-        this.table.drawEllipse(this.tableWidth, this.tableHeight, this.tableWidth, this.tableHeight)
-        //table.drawRoundedRect(0, 0, this.tableWidth * 2, this.tableHeight * 2, this.tableHeight)
-        this.table.endFill();
-        this.table.position.set(this.app.renderer.width / 2 - this.tableWidth, this.app.renderer.height / 2 - this.tableHeight)
-
-
-        this.board.id = this.id;
-        this.board.addCards(3);
-        this.board.update({
-            updatedWidth: () => {
-                this.board.position.set((this.app.renderer.width / 2) - (this.board.width / 2), (this.app.renderer.height / 2) - (this.board.height / 2));
-            }
-        });
-        this.board.position.set((this.app.renderer.width / 2) - (this.board.width / 2), (this.app.renderer.height / 2) - (this.board.height / 2));
         this.notification.reset();
         this.players.updateFromState();
         this.app.ticker.add(delta => this.gameLoop(delta))
