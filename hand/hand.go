@@ -1,9 +1,7 @@
 package hand
 
 import (
-	"log"
-	"math/rand"
-	"time"
+	"sync"
 
 	"github.com/JohnnyS318/go-poker/bank"
 	"github.com/JohnnyS318/go-poker/models"
@@ -25,20 +23,11 @@ type Hand struct {
 	Blind           int
 	bigBlindIndex   int
 	smallBlindIndex int
+	wg              sync.WaitGroup
 }
 
 //NewHand creates a new hand and sets the dealer to the next
-func NewHand(players []models.Player, bank *bank.Bank, previousDealer int) *Hand {
-
-	rand.Seed(time.Now().UnixNano())
-	var dealer int
-	if previousDealer < 0 {
-		l := rand.Intn(len(players))
-		log.Printf("Dealer choosen random %d", l)
-		dealer = l
-	} else {
-		dealer = (previousDealer + 1) % len(players)
-	}
+func NewHand(players []models.Player, bank *bank.Bank, dealer int) *Hand {
 
 	return &Hand{
 		Players: players,

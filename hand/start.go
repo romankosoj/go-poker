@@ -9,7 +9,7 @@ import (
 	"github.com/JohnnyS318/go-poker/utils"
 )
 
-func (h *Hand) Start() int {
+func (h *Hand) Start() {
 
 	//publish players and position
 
@@ -87,15 +87,9 @@ func (h *Hand) Start() int {
 		winningPublic[i] = publicPlayers[n]
 	}
 
-	err := h.Bank.ResetRound(winners)
+	share := h.Bank.ResetRound(winners)
 
-	if err != nil {
-		log.Fatalf("Server error during round conclusion")
-	}
-
-	utils.SendToAll(h.Players, events.NewGameEndEvent(winningPublic, h.Bank.Round.Pot/len(winningPublic)))
-
-	return h.Dealer
+	utils.SendToAll(h.Players, events.NewGameEndEvent(winningPublic, share))
 }
 
 func (h *Hand) End() {

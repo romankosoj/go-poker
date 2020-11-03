@@ -36,77 +36,34 @@ func (l *LobbyManager) ManagePlayer(player *models.Player, event *events.JoinEve
 		log.Printf("Found lobbies %v", a)
 
 		for _, id := range a {
-			lobby := l.Lobbies[id]
-			err := l.Join(lobby, player)
-			if err == nil {
-				return lobby, nil
-			}
-			log.Printf("Error during lobby joining %v", err)
+			l.Lobbies[id].JoinPlayer(player)
+			return l.Lobbies[id], nil
 		}
-
-		c := make(chan string)
 
 		// No lobby fits so create a new one
 		//
-		id, err := l.CreateNew(c)
-
+		id, err := l.CreateNew()
 		if err == nil {
-			lobby := l.Lobbies[id]
-			err := l.Join(lobby, player)
-
-			if err == nil {
-				return lobby, nil
-			}
+			l.Lobbies[id].JoinPlayer(player)
+			return l.Lobbies[id], nil
 		}
 
-		log.Printf("Waiting for empty lobby")
-
-		// No new lobby can be crated, due to this we have to wait until a player leaves a given lobby.
-		// We register in a single line queue to
-		//l.PlayerQueue.Enqueue(player, event.ID)
-		//id = <-c
-
-		// get a random lobby int64 is faster than a random byte
+		log.Printf("Queueing in any full lobby")
+		// get a random lobby int64 is faster than a intn
 		i := rand.Int63() % int64(len(l.Lobbies))
 		name := l.LobbiesIndexed[i]
 		// Enqueue player in the lobby specific queue
-		l.Lobbies[name].EnqueuePlayer(player)
-
-		lobby := l.Lobbies[id]
-
-		err = l.Join(lobby, player)
-
-		if err != nil {
-			return nil, errors.New("Joining after waiting was unsuccessfull")
-		}
-		return lobby, nil
-
+		l.Lobbies[name].JoinPlayer(player)
+		return l.Lobbies[name], nil
 	}
+
 	lobby, ok := l.Lobbies[event.ID]
 
 	if !ok {
 		return nil, errors.New("The specified LobbyId was invalid or the referenced lobby did not exist")
 	}
 
-	if lobby.HasCapacaty() {
-		err := l.Join(lobby, player)
+	lobby.JoinPlayer(player)
 
-		if err == nil {
-			return lobby, nil
-		}
-	}
-
-	return nil, errors.New("Something went wrong")
-}
-
-func (l *LobbyManager) Join(lobby *lobby.Lobby, player *models.Player) error {
-	log.Printf("Joining Lobby [%v]", lobby.LobbyID)
-	err := lobby.JoinPlayer(player)
-
-	if err != nil {
-		return err
-	}
-
-	log.Printf("Player count %v", len(lobby.Players))
-	return nil
+	return lobby, nil
 }

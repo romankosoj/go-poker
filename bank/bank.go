@@ -4,44 +4,60 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/JohnnyS318/go-poker/models"
 )
 
 type Bank struct {
-	PlayerValues map[string]int
-	Round        *Round
+	lock         sync.RWMutex
+	PlayerWallet map[string]int
+
+	PlayerBets map[string]int
+	Pot        int
+	MaxBet     int
 }
 
-func NewBank(players []models.Player) *Bank {
-	values := make(map[string]int)
-
-	for i, n := range players {
-		if players[i].Active {
-			values[n.ID] = n.BuyIn
-		}
-	}
-
+func NewBank() *Bank {
 	return &Bank{
-		PlayerValues: values,
-		Round:        NewRound(values),
+		PlayerWallet: make(map[string]int),
+		PlayerBets:   make(map[string]int),
 	}
 }
 
-func (b *Bank) ResetRound(winners []string) error {
-	err := b.Round.Conclude(winners)
-	if err != nil {
-		return err
+func (b *Bank) AddPlayer(player *models.Player) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+	b.PlayerWallet[player.ID] = player.BuyIn
+	b.PlayerBets[player.ID] = 0
+}
+
+func (b *Bank) ResetRound(winners []string) int {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
+	if winners == nil || b.Pot == 0 {
+		return -1
 	}
-	b.Round = NewRound(b.PlayerValues)
-	return nil
+
+	share := b.Pot / len(winners)
+
+	for _, n := range winners {
+		b.PlayerWallet[n] += share
+		log.Printf("User [%v] wins share %d", n, share)
+	}
+
+	b.Pot = 0
+	return share
 }
 
 func (b *Bank) PlayerBet(id string, amount int) error {
 
-	log.Printf("Player %v bets %d", id, amount)
+	b.lock.Lock()
+	defer b.lock.Unlock()
 
-	playerValue, ok := b.PlayerValues[id]
+	log.Printf("Player %v bets %d", id, amount)
+	playerValue, ok := b.PlayerWallet[id]
 
 	if !ok {
 		log.Printf("Player not registered in bank")
@@ -53,27 +69,51 @@ func (b *Bank) PlayerBet(id string, amount int) error {
 		return fmt.Errorf("The player does not have the capacity to bet %v ", amount)
 	}
 
-	if amount < b.Round.MaxBet && playerValue != amount {
-
+	if amount < b.MaxBet && playerValue != amount {
 		// Player bet is les than round bet and is not an all in => invalid
 		return errors.New("The player has to bet more or equal the round bet or do an all in")
 	}
 
 	//player can bet amount
-	b.PlayerValues[id] = b.PlayerValues[id] - amount
-
-	err := b.Round.PlayerBet(id, amount)
+	b.PlayerWallet[id] = b.PlayerWallet[id] - amount
+	b.PlayerBets[id] = amount
 
 	log.Printf("Bet success")
 
-	return err
+	return nil
 }
 
 func (b *Bank) RemovePlayer(id string) error {
-	_, ok := b.PlayerValues[id]
+	b.lock.Lock()
+	defer b.lock.Unlock()
+	_, ok := b.PlayerWallet[id]
 	if ok {
-		delete(b.PlayerValues, id)
+		delete(b.PlayerWallet, id)
 		return nil
 	}
 	return errors.New("Player not registered in bank")
+}
+
+func (b *Bank) GetPot() int {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+	return b.Pot
+}
+
+func (b *Bank) GetMaxBet() int {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+	return b.MaxBet
+}
+
+func (b *Bank) GetPlayerWallet() map[string]int {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+	return b.PlayerWallet
+}
+
+func (b *Bank) GetPlayerBets() map[string]int {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+	return b.PlayerBets
 }
