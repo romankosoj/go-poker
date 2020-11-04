@@ -97,8 +97,9 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 		}
 
 		if a.Action == events.RAISE {
-			log.Printf("Raised to [%v] > [%v]", a.Payload, h.Bank.Round.MaxBet)
-			if a.Payload > h.Bank.Round.MaxBet {
+			max := h.Bank.GetMaxBet()
+			log.Printf("Raised to [%v] > [%v]", a.Payload, max)
+			if a.Payload > max {
 				amount := a.Payload
 				err := h.Bank.PlayerBet(h.Players[k].ID, amount)
 				if err == nil {
@@ -117,7 +118,8 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 		}
 
 		if a.Action == events.BET {
-			err := h.Bank.PlayerBet(h.Players[k].ID, h.Bank.Round.MaxBet)
+			max := h.Bank.GetMaxBet()
+			err := h.Bank.PlayerBet(h.Players[k].ID, max)
 			if err == nil {
 				success = true
 				succeededAction = events.Action{
@@ -126,7 +128,7 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 				}
 				blocking = removeBlocking(blocking, i)
 				removed = true
-				payload = h.Bank.Round.MaxBet
+				payload = max
 				break
 			}
 			h.playerError(i, fmt.Sprintf("Bet must be equal to the current highest bet. %v more tries", j))

@@ -59,35 +59,37 @@ func (l *Lobby) Start() {
 	log.Printf("Lobby Started")
 	// SETUP
 	dealer := -1
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		for len(l.Players) > 2 {
+			log.Printf("Game started")
+			time.Sleep(10 * time.Second)
 
-	for len(l.Players) > 2 {
-		log.Printf("Game started")
-		time.Sleep(10 * time.Second)
+			rand.Seed(time.Now().UnixNano())
+			if dealer < 0 {
+				dealer = rand.Intn(len(l.Players))
+			} else {
+				dealer = (dealer + 1) % len(l.Players)
+			}
+			log.Printf("Dealer choosen random %d", dealer)
 
-		var wg sync.WaitGroup
+			for i := range l.Players {
+				l.Players[i].Active = true
+			}
 
-		rand.Seed(time.Now().UnixNano())
-		if dealer < 0 {
-			dealer = rand.Intn(len(l.Players))
-		} else {
-			dealer = (dealer + 1) % len(l.Players)
+			hand := hand.NewHand(l.Players, l.Bank, dealer)
+
+			hand.Start()
+
+			l.GameStarted = false
+			if len(l.ToRemove) < 1 {
+				l.RemoveAfterGame()
+			}
+
 		}
-		log.Printf("Dealer choosen random %d", dealer)
-
-		for i := range l.Players {
-			l.Players[i].Active = true
-		}
-
-		hand := hand.NewHand(l.Players, l.Bank, dealer)
-
-		hand.Start()
-
-		l.GameStarted = false
-		if len(l.ToRemove) < 1 {
-			l.RemoveAfterGame()
-		}
-
-	}
+	}()
+	wg.Wait()
 }
 
 func (l *Lobby) JoinPlayer(player *models.Player) {
