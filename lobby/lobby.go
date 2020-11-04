@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log"
 	"math/rand"
-	"sync"
 	"time"
 
 	"github.com/JohnnyS318/go-poker/bank"
@@ -59,8 +58,6 @@ func (l *Lobby) Start() {
 	log.Printf("Lobby Started")
 	// SETUP
 	dealer := -1
-	var wg sync.WaitGroup
-	wg.Add(1)
 	go func() {
 		for len(l.Players) > 2 {
 			log.Printf("Game started")
@@ -89,7 +86,6 @@ func (l *Lobby) Start() {
 
 		}
 	}()
-	wg.Wait()
 }
 
 func (l *Lobby) JoinPlayer(player *models.Player) {
