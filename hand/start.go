@@ -90,6 +90,9 @@ func (h *Hand) Start() {
 	share := h.Bank.ResetRound(winners)
 
 	utils.SendToAll(h.Players, events.NewGameEndEvent(winningPublic, share))
+
+	log.Printf("Hand Ended leaving now")
+
 }
 
 func (h *Hand) End() {
