@@ -27,19 +27,13 @@ type Hand struct {
 }
 
 //NewHand creates a new hand and sets the dealer to the next
-func NewHand(players []models.Player, bank *bank.Bank, dealer int) *Hand {
+func NewHand(bank *bank.Bank) *Hand {
 
 	return &Hand{
-		Players: players,
-		//In:        players,
-		Bank:      bank,
-		Dealer:    dealer,
-		HoleCards: make(map[string][2]models.Card, len(players)),
-		InCount:   len(players),
-		cardGen:   utils.NewCardSelector(),
-		Blind:     10,
+		Bank:    bank,
+		cardGen: utils.NewCardSelector(),
+		Blind:   10,
 	}
-
 }
 
 func (h *Hand) WhileNotEnded(f func()) {

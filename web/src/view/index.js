@@ -30,15 +30,10 @@ class View extends React.Component {
                 resizeTo: window,
             });
 
-            this.gameState.setOnUpdate(this.gameUpdate.bind(this));
-
             this.app.loader = this.props.loader;
             this.app.loader.load(this.setup.bind(this))
-
             Renderer.registerPlugin("interaction", InteractionManager);
-
             this.app.renderer.backgroundColor = 0xffffff;
-
             d.appendChild(this.app.view);
 
             registerApp(this.app);
@@ -64,21 +59,31 @@ class View extends React.Component {
             //table.drawRoundedRect(0, 0, this.tableWidth * 2, this.tableHeight * 2, this.tableHeight)
             this.table.endFill();
             this.table.position.set(this.app.renderer.width / 2 - this.tableWidth, this.app.renderer.height / 2 - this.tableHeight)
-    
+
             this.board.id = this.id;
-            this.board.addCards(3);
             this.board.update({
                 updatedWidth: () => {
                     this.board.position.set((this.app.renderer.width / 2) - (this.board.width / 2), (this.app.renderer.height / 2) - (this.board.height / 2));
                 }
             });
             this.board.position.set((this.app.renderer.width / 2) - (this.board.width / 2), (this.app.renderer.height / 2) - (this.board.height / 2));
-
         })
     }
 
 
     gameUpdate(event, data) {
+        if (this.didSetup) {
+            this.updateFromState()
+        } else {
+            setTimeout(() => {
+                if (this.didSetup) {
+                    this.updateFromState()
+                }
+            }, 500)
+        }
+    }
+
+    updateFromState(event, data) {
         console.log("Game Update in view [", event, "]: ", data);
         if (event === UpdateEvents.playerList) {
             this.players.updateFromState();
@@ -103,45 +108,35 @@ class View extends React.Component {
         this.id = this.app.loader.resources["textures/cards.json"].textures;
 
         this.notification.reset();
-        this.players.updateFromState();
+
+        setTimeout(() => {
+            if (this.gameState.stateBuild) {
+                this.players.updateFromState();
+            }
+        }, 500)
+        if (this.gameState.stateBuild) {
+            this.players.updateFromState();
+        }
+
         this.app.ticker.add(delta => this.gameLoop(delta))
     }
 
     gameLoop(delta) {
         this.players.gameLoop(delta);
+
+        this.workUpdateQueue();
+
     }
 
-    // updatePlayers() {
-    //     if (isMobile()) {
-    //         this.generatePlayers(this.id, this.game.players, this.tableWidth - rW(75), this.tableHeight - rH(65), this.table.x + this.tableWidth, this.table.y + this.tableHeight)
-    //     } else {
-    //         this.generatePlayers(this.id, this.game.players, this.tableWidth, this.tableHeight, this.table.x + this.tableWidth, this.table.y + this.tableHeight)
-    //     }
-    // }
-    //
-    // generatePlayers(id, players, tWidth, tHeight, tX, tY) {
-    //     if (this.game.players && this.game.players.length) {
-    //         this.players = [];
-    //         this.angles = [];
-    //         let n = players.length
-    //         let a = 360 / n;
-    //         for (let i = 0; i < n; i++) {
-    //             this.angles.push(a * i * Math.PI / 180);
-    //             let player = new Player(id,
-    //                 {
-    //                     angle: this.angles[i],
-    //                 },
-    //                 this.gameState,
-    //                 i
-    //             );
-    //             const x = tX + (tWidth + player.width) * Math.cos(this.angles[i]);
-    //             const y = tY + (tHeight + player.height) * Math.sin(this.angles[i]);
-    //             player.position.set(x, y);
-    //             this.players.push(player);
-    //             this.app.stage.addChild(player);
-    //         }
-    //     }
-    // }
+    workUpdateQueue() {
+        if (this.gameState.updateQueue.length > 0) {
+            for (let i = 0; i < this.gameState.length; i++) {
+                const work = this.gameState.updateQueue[0];
+                this.gameUpdate(work.event, work.data)
+                this.gameState.updateQueue.shift();
+            }
+        }
+    }
 
     render() {
         return (

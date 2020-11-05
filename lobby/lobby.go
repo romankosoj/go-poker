@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/JohnnyS318/go-poker/bank"
@@ -27,16 +28,19 @@ type Lobby struct {
 	PlayerQueue          []*models.Player
 	Bank                 *bank.Bank
 	dealer               int
+	hand                 *hand.Hand
 }
 
 func NewLobby() *Lobby {
+	bank := bank.NewBank()
 	return &Lobby{
 		LobbyID:     GenerateLobbyID(),
 		Players:     make([]models.Player, 0),
 		ToBeRemoved: make([]int, 0),
 		PlayerQueue: make([]*models.Player, 0),
-		Bank:        bank.NewBank(),
+		Bank:        bank,
 		dealer:      -1,
+		hand:        hand.NewHand(bank),
 	}
 }
 
@@ -58,15 +62,9 @@ func (l *Lobby) DequeuePlayer() (player *models.Player, ok bool) {
 }
 
 func (l *Lobby) Start() {
-	l.lock.Lock()
-	l.GameStarted = true
-	l.lock.Unlock()
+
 	log.Printf("Lobby Started")
 	// SETUP
-<<<<<<< HEAD
-	dealer := -1
-=======
->>>>>>> e57f71a9581dbf0b0564fb148793e82dcc5f769a
 	go func() {
 		for len(l.Players) > 2 {
 			log.Printf("Game started")
@@ -84,24 +82,22 @@ func (l *Lobby) Start() {
 				l.Players[i].Active = true
 			}
 
-			hand := hand.NewHand(l.Players, l.Bank, l.dealer)
-
-			hand.Start()
-
+			l.lock.Lock()
+			l.GameStarted = true
+			l.lock.Unlock()
+			l.hand.Start(l.Players, l.dealer)
 			l.lock.Lock()
 			l.GameStarted = false
 			l.lock.Unlock()
+
 			if l.HasToBeRemoved() {
 				l.RemoveAfterGame()
 			}
 			if l.HasToBeRemoved() {
-
 				l.EmptyToBeAdded()
 			}
 		}
 	}()
-<<<<<<< HEAD
-=======
 }
 
 func (l *Lobby) GetGameStarted() bool {
@@ -120,7 +116,6 @@ func (l *Lobby) HasToBeRemoved() bool {
 	l.lock.RLock()
 	defer l.lock.RUnlock()
 	return len(l.ToBeRemoved) > 0
->>>>>>> e57f71a9581dbf0b0564fb148793e82dcc5f769a
 }
 
 func (l *Lobby) JoinPlayer(player *models.Player) {
@@ -130,16 +125,16 @@ func (l *Lobby) JoinPlayer(player *models.Player) {
 		l.lock.Lock()
 		l.ToBeAdded = append(l.ToBeAdded, player)
 		l.lock.Unlock()
-
-		if !l.GameStarted {
+		gameStarted := l.GetGameStarted()
+		if !gameStarted {
 			l.EmptyToBeAdded()
 		}
 
-		utils.SendToPlayer(player, events.NewJoinSuccessEvent(l.LobbyID, l.Players, l.GameStarted, 0, le, l.MaxBuyIn, l.MinBuyIn, l.Blinds))
+		utils.SendToPlayer(player, events.NewJoinSuccessEvent(l.LobbyID, l.Players, gameStarted, 0, le, l.MaxBuyIn, l.MinBuyIn, l.Blinds))
 
 		l.Bank.AddPlayer(player)
 
-		if len(l.Players) > 2 && !l.GameStarted {
+		if len(l.Players) > 2 && !gameStarted {
 			l.Start()
 		}
 	} else {
@@ -155,6 +150,7 @@ func (l *Lobby) EmptyToBeAdded() {
 			l.Players = append(l.Players, *l.ToBeAdded[i])
 			log.Printf("Player joined lobby %v", l.ToBeAdded[i])
 			log.Printf("Player count in join lobby %v", len(l.Players))
+			utils.SendToAll(l.Players, events.NewPlayerJoinEvent(l.ToBeAdded[i].ToPublic(), len(l.Players)-1))
 		} else {
 			l.EnqueuePlayer(l.ToBeAdded[i])
 		}
@@ -173,23 +169,19 @@ func (l *Lobby) RemovePlayerByID(id string) error {
 		return errors.New("The player is not in the lobby")
 	}
 
-	log.Printf("Game runing ?: [%v]", l.GameStarted)
+	log.Printf("Game runing ?: [%v]", l.GetGameStarted())
 
-	l.RemovePlayer(i)
+	l.lock.Lock()
+	l.ToBeRemoved = append(l.ToBeRemoved, i)
+	l.lock.Unlock()
+	l.hand.Fold(id)
+	if !l.GetGameStarted() {
+		l.RemoveAfterGame()
+	}
 
 	log.Printf("Players in lobby? %v", len(l.Players))
 
 	return nil
-}
-
-func (l *Lobby) RemovePlayer(i int) {
-	l.lock.Lock()
-	l.ToBeRemoved = append(l.ToBeRemoved, i)
-	gameStarted := l.GameStarted
-	l.lock.Unlock()
-	if !gameStarted {
-		l.RemoveAfterGame()
-	}
 }
 
 func (l *Lobby) FindPlayerByID(id string) int {

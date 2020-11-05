@@ -59,3 +59,15 @@ func NewPlayerLeavesEvent(player *models.Player, i int) *PlayerLeavesEvent {
 		Index:  i,
 	}
 }
+
+type PlayerJoinEvent struct {
+	Player *models.PublicPlayer `json:"player"`
+	Index  int                  `json:"index"`
+}
+
+func NewPlayerJoinEvent(player *models.PublicPlayer, index int) *models.Event {
+	return models.NewEvent(PLAYER_JOIN, &PlayerJoinEvent{
+		Player: player,
+		Index:  index,
+	})
+}

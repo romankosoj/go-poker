@@ -9,7 +9,12 @@ import (
 	"github.com/JohnnyS318/go-poker/utils"
 )
 
-func (h *Hand) Start() {
+func (h *Hand) Start(players []models.Player, dealer int) {
+
+	h.Dealer = dealer
+	h.Players = players
+	h.InCount = len(players)
+	h.HoleCards = make(map[string][2]models.Card, len(players))
 
 	//publish players and position
 
@@ -17,10 +22,8 @@ func (h *Hand) Start() {
 
 	var publicPlayers []models.PublicPlayer
 
-	for i, n := range h.Players {
-		publicPlayers = append(publicPlayers, *n.ToPublic())
-		n.Active = true
-		h.Players[i].Active = true
+	for i := range h.Players {
+		publicPlayers = append(publicPlayers, *h.Players[i].ToPublic())
 	}
 
 	for i := range h.Players {

@@ -1,4 +1,5 @@
-const { JOIN_SUCCESS, GAME_START, DEALER_SET, WAIT_FOR_PLAYER_ACTION, ACTION_PROCESSED, PLAYER_LEAVES, FLOP, TURN, RIVER, GAME_END, HOLE_CARDS } = require("../events/constants");
+
+const { JOIN_SUCCESS, GAME_START, DEALER_SET, WAIT_FOR_PLAYER_ACTION, ACTION_PROCESSED, FLOP, TURN, RIVER, GAME_END, HOLE_CARDS, PLAYER_JOIN } = require("../events/constants");
 const { BET, RAISE, FOLD, Action } = require("../models/action");
 const { Player } = require("../models/player");
 
@@ -21,6 +22,9 @@ class GameState {
         this.onNotification = (text, st) => {
 
         }
+        this.stateBuild = false;
+
+        this.updateQueue = [];
     }
 
     setOnPossibleActions(onPossibleActions) {
@@ -47,18 +51,26 @@ class GameState {
     decodeChange(e) {
 
         console.log("decoding event", e)
-        const w = this.state.waitingFor;
-        console.log(e.event);
         switch (e.event) {
 
             case JOIN_SUCCESS:
+                console.log("Players: ", e.data.players)
                 this.state.roundState = -2;
                 this.state.players = e.data.position;
                 for (let i = 0; i < e.data.players.length; i++) {
-                    this.state.players.push(new Player(e.data.players[i].username, e.data.players[i].id, 10));
+                    this.state.players.push(new Player(e.data.players[i].username, e.data.players[i].id, e.data.players[i].buyIn));
                 }
+                console.log("State build: ", this.state);
                 this.onNotification("The game starts soon...", true);
-                this.onUpdate(UpdateEvents.lobbyJoin);
+                this.stateBuild = true;
+                this.updateQueue.push({ event: UpdateEvents.lobbyJoin })
+                break;
+
+            case PLAYER_JOIN:
+                this.state.player.push(new Player(e.data.player.username, e.data.player.id, e.data.player.buyIn))
+                if (this.updateQueue[this.updateQueue.length - 1].event !== UpdateEvents.playerList) {
+                    this.updateQueue.push({ event: UpdateEvents.playerList })
+                }
                 break;
 
             case GAME_START:
@@ -68,11 +80,10 @@ class GameState {
                     this.state.players.push(new Player(e.data.players[i].username, e.data.players[i].id, 10));
                 }
                 this.onGameStart();
-                this.onUpdate(UpdateEvents.gameStart);
                 break;
             case DEALER_SET:
                 this.state.dealer = e.data;
-                this.onUpdate(UpdateEvents.dealer, e.data);
+                this.updateQueue.push({ event: UpdateEvents.dealer, data: e.data });
                 break;
 
             case HOLE_CARDS:
@@ -80,7 +91,7 @@ class GameState {
                     this.state.players[i].cards = [{ color: -1, value: -1 }, { color: -1, value: -1 },]
                 }
                 this.state.players[this.state.player].cards = e.data.cards;
-                this.onUpdate(UpdateEvents.playerCards);
+                this.updateQueue.push({ event: UpdateEvents.playerCards });
                 break;
 
             case WAIT_FOR_PLAYER_ACTION:
@@ -92,18 +103,19 @@ class GameState {
                 } else {
                     this.onPossibleAction(0);
                 }
-                this.onUpdate(UpdateEvents.player, e.data.position);
+                this.updateQueue.push({ event: UpdateEvents.player, data: e.data.position })
                 break;
 
-            case PLAYER_LEAVES:
-                if (e.data.index === this.state.players.length - 1) {
-                    this.state.players.pop();
-                } else {
-                    const end = this.state.players.slice(e.data.index, this.state.players.length - 1);
-                    this.state.players.splice(w, 1, end);
-                }
-                this.onUpdate(UpdateEvents.playerList);
-                break;
+            // case PLAYER_LEAVES:
+            //     if (e.data.index === this.state.players.length - 1) {
+            //         this.state.players.pop();
+            //     } else {
+            //         const end = this.state.players.slice(e.data.index, this.state.players.length - 1);
+            //         this.state.players.splice(w, 1, end);
+            //     }
+            //     this.onUpdate(UpdateEvents.playerList);
+            //     this.updateQueue.push(UpdateEvents.playerList)
+            //     break;
 
             case ACTION_PROCESSED:
                 if (this.state.lastAction > -1) {
@@ -126,30 +138,33 @@ class GameState {
 
                 this.state.lastAction = e.data.position;
                 this.state.waitingFor = -1;
-                this.onUpdate(UpdateEvents.player, e.data.position);
+                this.updateQueue.push({ event: UpdateEvents.player, data: e.data.position });
                 break;
 
             case FLOP:
                 this.state.roundState = 1;
                 this.state.board = e.data.cards;
-                this.onUpdate(UpdateEvents.board);
+                this.updateQueue.push({ event: UpdateEvents.board });
+
                 break;
             case TURN:
                 this.state.roundState = 2;
                 this.state.board = this.state.board.concat(e.data.cards);
-                this.onUpdate(UpdateEvents.board);
+                this.updateQueue.push({ event: UpdateEvents.board });
+
                 break;
             case RIVER:
                 this.state.roundState = 3;
                 this.state.board = this.state.board.concat(e.data.cards);
-                this.onUpdate(UpdateEvents.board);
+                this.updateQueue.push({ event: UpdateEvents.board });
+
                 break;
 
             case GAME_END:
                 this.state.roundState = 4;
                 console.log("notification request")
-                this.onNotification("Game ended. Next game coninues now.", false)
-                this.onUpdate(UpdateEvents.gameEnd);
+                this.onNotification("Game ended. Next game coninues now.", false);
+                this.updateQueue.push({ event: UpdateEvents.gameEnd })
                 this.onGameEnd();
                 break;
             default:
@@ -173,5 +188,4 @@ export const UpdateEvents = {
     dealer: 6,
     playerCards: 7,
     lobbyJoin: 8,
-
 }

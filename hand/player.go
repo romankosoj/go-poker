@@ -196,6 +196,18 @@ func (h *Hand) fold(id string) error {
 	return nil
 }
 
+func (h *Hand) Fold(id string) error {
+	i, err := h.searchByActiveID(id)
+
+	if err != nil {
+		return err
+	}
+	h.Players[i].Active = false
+	h.InCount--
+	utils.SendToAll(h.Players, events.NewActionProcessedEvent(events.FOLD, 0, i))
+	return nil
+}
+
 func (h *Hand) playerError(i int, message string) {
 	utils.SendToPlayerInList(h.Players, i, models.NewEvent("INVALID_ACTION", message))
 }

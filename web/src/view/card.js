@@ -28,11 +28,6 @@ class Card extends Container {
             rect.drawRoundedRect(0, 0, rW(CARDWIDTH), rH(CARDHEIGHT), 5);
             this.addChild(rect)
         }
-
-
-
-
-
         this.update(card);
     }
 
@@ -57,7 +52,7 @@ class Card extends Container {
                     uni = "♠"
                     break;
                 default:
-                    uni=""
+                    uni = ""
                     break;
             }
             if (this.card.value === -1 || this.card.color === -1) {

@@ -8,6 +8,7 @@ export const BLIND_SET = "SET_BLIND"
 // OUT:
 
 export const JOIN_SUCCESS = "JOIN_SUCCESS"
+export const PLAYER_JOIN = "PLAYER_JOIN"
 export const REQUIRED_EVENT_NAME_MISSING = "The event recieved does not match the required event name"
 export const GAME_START = "GAME_START"
 export const DEALER_SET = "DEALER_SET"
