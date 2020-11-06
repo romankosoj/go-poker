@@ -20,10 +20,15 @@ class Game {
         this.ws.onclose = e => {
             console.log("close", e)
         };
-
+        
+        this.ws.onmessage = e => {
+            console.log("Event: ", e)
+            if (e.data) {
+                this.state.decodeChange(JSON.parse(e.data));
+            }
+        };
+        
         this.ws.onopen = e => {
-            console.log("open", e)
-
             if (e.type === "error") {
                 this.onClose();
                 return
@@ -33,11 +38,6 @@ class Game {
             this.ws.send(SendCreateEvent(JOIN, this.credentials));
         };
 
-        this.ws.onmessage = e => {
-            if (e.data) {
-                this.state.decodeChange(JSON.parse(e.data));
-            }
-        };
 
         this.ws.onerror = e => {
             console.log("error", e)

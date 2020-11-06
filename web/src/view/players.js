@@ -2,23 +2,27 @@ import { Container } from "pixi.js";
 import { Player } from "./player";
 
 class Players extends Container {
-    constructor(state, id, table) {
+    constructor(state, table) {
         super();
         this.state = state;
         this.table = table;
-        this.id = id;
         this.angles = [];
     }
 
+    setup(id) {
+        this.id = id;
+    }
+
     updateFromState() {
+        console.log("Update Players from State: ", this.state.state.players)
+
         if (this.state.state.players.length === 0) {
             return
         }
-        let n = this.state.state.players.length
-        let a = 360 / n;
+        const a = 360 / this.state.state.players.length;
         this.angles = [];
         this.removeChildren();
-        for (let i = 0; i < n; i++) {
+        for (let i = 0; i < this.state.state.players.length; i++) {
             this.angles.push(a * i * Math.PI / 180);
             let player = new Player(
                 this.id,
@@ -26,9 +30,9 @@ class Players extends Container {
                 this.state,
                 i
             );
-            const x = this.table.x + (this.table.width + player.width) * Math.cos(this.angles[i]);
-            const y = this.table.y + (this.table.height + player.height) * Math.sin(this.angles[i]);
-            player.position.set(x, y);
+            const xPos = this.table.x + (this.table.width + player.width) * Math.cos(this.angles[i]);
+            const yPos = this.table.y + (this.table.height + player.height) * Math.sin(this.angles[i]);
+            player.position.set(xPos, yPos);
             this.addChild(player);
         }
     }

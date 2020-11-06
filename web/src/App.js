@@ -1,4 +1,3 @@
-import { Loader } from 'pixi.js';
 import React from 'react';
 import './App.css';
 import { Game } from './connection/socket';
@@ -15,14 +14,9 @@ class App extends React.Component {
       game: {},
       credentials: {},
       joined: false,
-      loader: Loader.shared,
       gameStarted: true,
       possibleActions: 0,
     }
-  }
-
-  componentDidMount() {
-    this.state.loader.add("textures/cards.json");
   }
 
   possibleActionsChange(actions) {
@@ -56,7 +50,7 @@ class App extends React.Component {
           this.state.joined
             ? <div>
               <Action game={this.state.game} actions={this.state.possibleActions}></Action>
-              <View game={this.state.game} loader={this.state.loader}></View>
+              <View game={this.state.game}></View>
             </div>
             : <Join onJoin={this.onJoin.bind(this)}></Join>
         }

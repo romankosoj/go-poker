@@ -16,8 +16,9 @@ import (
 
 type Lobby struct {
 	lock                 sync.RWMutex
-	LobbyID              string          `json:"lobbyId"`
-	Players              []models.Player `json:"players"`
+	LobbyID              string `json:"lobbyId"`
+	Players              []models.Player
+	PublicPlayers        []models.PublicPlayer `json:"players`
 	GameStarted          bool
 	MinBuyIn             int
 	MaxBuyIn             int
@@ -129,10 +130,11 @@ func (l *Lobby) JoinPlayer(player *models.Player) {
 		if !gameStarted {
 			l.EmptyToBeAdded()
 		}
-
-		utils.SendToPlayer(player, events.NewJoinSuccessEvent(l.LobbyID, l.Players, gameStarted, 0, le, l.MaxBuyIn, l.MinBuyIn, l.Blinds))
-
 		l.Bank.AddPlayer(player)
+
+		time.Sleep(200 * time.Millisecond)
+		log.Printf("Join Success event to [%v]", player.String())
+		utils.SendToPlayer(player, events.NewJoinSuccessEvent(l.LobbyID, l.PublicPlayers, gameStarted, 0, le, l.MaxBuyIn, l.MinBuyIn, l.Blinds))
 
 		if len(l.Players) > 2 && !gameStarted {
 			l.Start()
@@ -147,10 +149,16 @@ func (l *Lobby) EmptyToBeAdded() {
 	defer l.lock.Unlock()
 	for i := range l.ToBeAdded {
 		if len(l.Players) < 10 {
+			for j := range l.Players {
+				if l.Players[j].ID == l.ToBeAdded[i].ID {
+					continue
+				}
+			}
+			utils.SendToAll(l.Players, events.NewPlayerJoinEvent(l.ToBeAdded[i].ToPublic(), len(l.Players)-1))
 			l.Players = append(l.Players, *l.ToBeAdded[i])
+			l.PublicPlayers = append(l.PublicPlayers, *l.ToBeAdded[i].ToPublic())
 			log.Printf("Player joined lobby %v", l.ToBeAdded[i])
 			log.Printf("Player count in join lobby %v", len(l.Players))
-			utils.SendToAll(l.Players, events.NewPlayerJoinEvent(l.ToBeAdded[i].ToPublic(), len(l.Players)-1))
 		} else {
 			l.EnqueuePlayer(l.ToBeAdded[i])
 		}
@@ -163,13 +171,9 @@ func (l *Lobby) RemovePlayerByID(id string) error {
 
 	i := l.FindPlayerByID(id)
 
-	log.Printf("Removing player index %v", i)
-
 	if i < 0 {
 		return errors.New("The player is not in the lobby")
 	}
-
-	log.Printf("Game runing ?: [%v]", l.GetGameStarted())
 
 	l.lock.Lock()
 	l.ToBeRemoved = append(l.ToBeRemoved, i)
@@ -202,11 +206,15 @@ func (l *Lobby) RemoveAfterGame() {
 	l.lock.Lock()
 	defer l.lock.Unlock()
 	for _, i := range l.ToBeRemoved {
-		l.Bank.RemovePlayer(l.Players[i].ID)
-		l.Players = append(l.Players[:i], l.Players[i+1:]...)
-		player, ok := l.DequeuePlayer()
-		if ok {
-			l.JoinPlayer(player)
+		log.Printf("Removing player [%v] in list with length %v", i, len(l.Players))
+		if len(l.Players) > i {
+			l.Bank.RemovePlayer(l.Players[i].ID)
+			l.Players = append(l.Players[:i], l.Players[i+1:]...)
+			l.PublicPlayers = append(l.PublicPlayers[:i], l.PublicPlayers[i+1:]...)
+			player, ok := l.DequeuePlayer()
+			if ok {
+				l.JoinPlayer(player)
+			}
 		}
 	}
 }

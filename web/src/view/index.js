@@ -11,8 +11,6 @@ import { Notification } from "./notifcation";
 class View extends React.Component {
     constructor(props) {
         super(props);
-        console.log("Game", props.game);
-        console.log("State", props.game.state);
         this.gameState = props.game.state;
         this.game = props.game.state.state;
         this.didSetup = false;
@@ -20,7 +18,6 @@ class View extends React.Component {
 
     componentDidMount() {
         this.props.game.started.then(() => {
-            console.log("game started in view");
             const d = document.getElementById("view");
 
             this.app = new Application({
@@ -30,8 +27,9 @@ class View extends React.Component {
                 resizeTo: window,
             });
 
-            this.app.loader = this.props.loader;
-            this.app.loader.load(this.setup.bind(this))
+            Loader.shared
+                .add("textures/cards.json")
+                .load(this.setup.bind(this))
             Renderer.registerPlugin("interaction", InteractionManager);
             this.app.renderer.backgroundColor = 0xffffff;
             d.appendChild(this.app.view);
@@ -43,7 +41,8 @@ class View extends React.Component {
 
             this.notification = new Notification(this.gameState, this.app.renderer.width, this.app.renderer.height);
             this.notification.position.set(0, 0);
-            this.players = new Players();
+            this.players = new Players(this.gameState, this.table);
+            this.players.position.set(0,0)
 
             this.app.stage.addChild(this.table, this.board, this.players, this.notification);
 
@@ -60,7 +59,6 @@ class View extends React.Component {
             this.table.endFill();
             this.table.position.set(this.app.renderer.width / 2 - this.tableWidth, this.app.renderer.height / 2 - this.tableHeight)
 
-            this.board.id = this.id;
             this.board.update({
                 updatedWidth: () => {
                     this.board.position.set((this.app.renderer.width / 2) - (this.board.width / 2), (this.app.renderer.height / 2) - (this.board.height / 2));
@@ -69,22 +67,41 @@ class View extends React.Component {
             this.board.position.set((this.app.renderer.width / 2) - (this.board.width / 2), (this.app.renderer.height / 2) - (this.board.height / 2));
         })
     }
+    
+    setup() {
+        console.log("Setup exec")
+        this.didSetup = true;
+        this.id = Loader.shared.resources["textures/cards.json"].textures;
+
+        this.notification.reset();
+        this.players.setup(this.id);
+        this.board.setup(this.id);
+
+        this.app.ticker.add(delta => this.gameLoop(delta))
+    }
+    
+    gameLoop(delta) {
+        this.players.gameLoop(delta);
+        this.workUpdateQueue();
+    }
 
 
-    gameUpdate(event, data) {
-        if (this.didSetup) {
-            this.updateFromState()
-        } else {
-            setTimeout(() => {
-                if (this.didSetup) {
-                    this.updateFromState()
-                }
-            }, 500)
+    workUpdateQueue() {
+        if (this.gameState.updateQueue.length > 0) {
+            for (let i = 0; i < this.gameState.updateQueue.length; i++) {
+                const work = this.gameState.updateQueue[0];
+                console.log("Work has to be done")
+                this.updateFromState(work.event, work.data)
+                this.gameState.updateQueue.shift();
+            }
         }
     }
 
     updateFromState(event, data) {
         console.log("Game Update in view [", event, "]: ", data);
+        if (event === UpdateEvents.lobbyJoin) {
+            this.players.updateFromState();
+        }
         if (event === UpdateEvents.playerList) {
             this.players.updateFromState();
         }
@@ -102,42 +119,6 @@ class View extends React.Component {
         }
     }
 
-
-    setup() {
-        this.didSetup = true;
-        this.id = this.app.loader.resources["textures/cards.json"].textures;
-
-        this.notification.reset();
-
-        setTimeout(() => {
-            if (this.gameState.stateBuild) {
-                this.players.updateFromState();
-            }
-        }, 500)
-        if (this.gameState.stateBuild) {
-            this.players.updateFromState();
-        }
-
-        this.app.ticker.add(delta => this.gameLoop(delta))
-    }
-
-    gameLoop(delta) {
-        this.players.gameLoop(delta);
-
-        this.workUpdateQueue();
-
-    }
-
-    workUpdateQueue() {
-        if (this.gameState.updateQueue.length > 0) {
-            for (let i = 0; i < this.gameState.length; i++) {
-                const work = this.gameState.updateQueue[0];
-                this.gameUpdate(work.event, work.data)
-                this.gameState.updateQueue.shift();
-            }
-        }
-    }
-
     render() {
         return (
             <div id="view">
@@ -148,7 +129,6 @@ class View extends React.Component {
 
 View.propTypes = {
     game: PropTypes.instanceOf(Game),
-    loader: PropTypes.instanceOf(Loader),
 }
 
 export default View;

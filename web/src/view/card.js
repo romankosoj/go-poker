@@ -21,7 +21,7 @@ class Card extends Container {
             })
             this.addChild(this.sprite);
         } else {
-            this.sprite = new Sprite(id["back.png"]);
+            this.sprite = new Sprite(Texture.from("back.png"));
             this.addChild(this.sprite);
             let rect = new Graphics()
             rect.lineStyle(1, 0x000000, 1);

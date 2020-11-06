@@ -205,6 +205,7 @@ func (h *Hand) Fold(id string) error {
 	h.Players[i].Active = false
 	h.InCount--
 	utils.SendToAll(h.Players, events.NewActionProcessedEvent(events.FOLD, 0, i))
+	log.Printf("Folded player [%v]", h.Players[i].String())
 	return nil
 }
 

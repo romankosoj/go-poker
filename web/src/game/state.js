@@ -56,19 +56,18 @@ class GameState {
             case JOIN_SUCCESS:
                 console.log("Players: ", e.data.players)
                 this.state.roundState = -2;
-                this.state.players = e.data.position;
+                this.state.player = e.data.position;
                 for (let i = 0; i < e.data.players.length; i++) {
                     this.state.players.push(new Player(e.data.players[i].username, e.data.players[i].id, e.data.players[i].buyIn));
                 }
-                console.log("State build: ", this.state);
                 this.onNotification("The game starts soon...", true);
                 this.stateBuild = true;
                 this.updateQueue.push({ event: UpdateEvents.lobbyJoin })
                 break;
 
             case PLAYER_JOIN:
-                this.state.player.push(new Player(e.data.player.username, e.data.player.id, e.data.player.buyIn))
-                if (this.updateQueue[this.updateQueue.length - 1].event !== UpdateEvents.playerList) {
+                this.state.players.push(new Player(e.data.player.username, e.data.player.id, e.data.player.buyIn))
+                if (this.updateQueue[this.updateQueue.length - 1]?.event !== UpdateEvents.playerList) {
                     this.updateQueue.push({ event: UpdateEvents.playerList })
                 }
                 break;
@@ -77,7 +76,7 @@ class GameState {
                 this.state.roundState = -1;
                 this.state.player = e.data.position;
                 for (let i = 0; i < e.data.players.length; i++) {
-                    this.state.players.push(new Player(e.data.players[i].username, e.data.players[i].id, 10));
+                    this.state.players.push(new Player(e.data.players[i].username, e.data.players[i].id, e.data.players[i].buyIn));
                 }
                 this.onGameStart();
                 break;
@@ -121,7 +120,7 @@ class GameState {
                 if (this.state.lastAction > -1) {
                     const lastIndex = this.state.lastAction
                     this.state.players[lastIndex].isLastAction = false;
-                    this.onUpdate(UpdateEvents.player, lastIndex);
+                    this.updateQueue.push({event: UpdateEvents.player, data: lastIndex});
                 }
                 const player = this.state.players[e.data.position];
                 player.waiting = false;
