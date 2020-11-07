@@ -5,6 +5,7 @@ import { GameState } from './game/state';
 import Join from './join';
 import Action from "./action"
 import View from './view';
+import { Loader } from "pixi.js"
 
 class App extends React.Component {
 
@@ -13,14 +14,18 @@ class App extends React.Component {
     this.state = {
       game: {},
       credentials: {},
+      //loader: Loader.shared,
       joined: false,
       gameStarted: true,
       possibleActions: 0,
     }
   }
 
+  componentDidMount() {
+    //this.state.loader.add("textures/cards.json");
+  }
+
   possibleActionsChange(actions) {
-    console.log("Action passthrough: ", actions)
     this.setState({ possibleActions: actions })
   }
 
@@ -50,7 +55,7 @@ class App extends React.Component {
           this.state.joined
             ? <div>
               <Action game={this.state.game} actions={this.state.possibleActions}></Action>
-              <View game={this.state.game}></View>
+              <View game={this.state.game} ></View>
             </div>
             : <Join onJoin={this.onJoin.bind(this)}></Join>
         }

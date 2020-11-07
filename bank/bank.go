@@ -48,7 +48,18 @@ func (b *Bank) ResetRound(winners []string) int {
 	}
 
 	b.Pot = 0
+	b.MaxBet = 0
 	return share
+}
+
+func (b *Bank) Reset() {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+	b.Pot = 0
+	b.MaxBet = 0
+	for id := range b.PlayerBets {
+		b.PlayerBets[id] = 0
+	}
 }
 
 func (b *Bank) PlayerBet(id string, amount int) error {
@@ -69,14 +80,19 @@ func (b *Bank) PlayerBet(id string, amount int) error {
 		return fmt.Errorf("The player does not have the capacity to bet %v ", amount)
 	}
 
+	log.Printf("[%v] < %v && %v != [%v]", amount, b.MaxBet, playerValue, amount)
 	if amount < b.MaxBet && playerValue != amount {
 		// Player bet is les than round bet and is not an all in => invalid
 		return errors.New("The player has to bet more or equal the round bet or do an all in")
 	}
 
 	//player can bet amount
-	b.PlayerWallet[id] = b.PlayerWallet[id] - amount
-	b.PlayerBets[id] = amount
+	b.PlayerWallet[id] = playerValue - (amount - b.PlayerBets[id])
+	b.PlayerBets[id] = amount - b.PlayerBets[id]
+
+	if amount > b.MaxBet {
+		b.MaxBet = amount
+	}
 
 	log.Printf("Bet success")
 
@@ -116,4 +132,14 @@ func (b *Bank) GetPlayerBets() map[string]int {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 	return b.PlayerBets
+}
+
+func (b *Bank) GetTotalPlayerBet(id string) int {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+	t, ok := b.PlayerBets[id]
+	if !ok {
+		return -1
+	}
+	return t
 }

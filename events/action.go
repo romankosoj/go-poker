@@ -2,6 +2,7 @@ package events
 
 import (
 	"errors"
+	"log"
 
 	"github.com/JohnnyS318/go-poker/models"
 	"github.com/mitchellh/mapstructure"
@@ -49,15 +50,18 @@ func NewWaitForActionEvent(position int, possibleActions byte) *models.Event {
 type ActionProcessedEvent struct {
 	Action int `json:"action" mapstructure:"action"`
 	//Player   *models.PublicPlayer `json:"player" mapstructure:"player"`
-	Position int `json:"position" mapstructure:"position"`
-	Amount   int `json:"amount" mapstructure:"amount"`
+	Position    int `json:"position" mapstructure:"position"`
+	Amount      int `json:"amount" mapstructure:"amount"`
+	TotalAmount int `json:"totalAmount" mapstructure:"totalAmount"`
 }
 
-func NewActionProcessedEvent(action, amount, position int) *models.Event {
+func NewActionProcessedEvent(action, amount, position, totalAmount int) *models.Event {
+	log.Printf("Player [%v] total: %v", position, totalAmount)
 	return models.NewEvent(ACTION_PROCESSED, &ActionProcessedEvent{
-		Action:   action,
-		Position: position,
-		Amount:   amount,
+		Action:      action,
+		Position:    position,
+		Amount:      amount,
+		TotalAmount: totalAmount,
 		//Player:   player.ToPublic(),
 	})
 }

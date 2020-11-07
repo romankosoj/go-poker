@@ -1,25 +1,26 @@
 const { Container, Text, Graphics } = require("pixi.js");
 
 class Notification extends Container {
-    constructor(gameState, appWidth, appHeight) {
+    constructor(state, appWidth, appHeight) {
         super()
+        this.state = state;
+        this.notification = {};
+        this.appWidth = appWidth;
+        this.appHeight = appHeight;
 
-        this.notification =
-            this.appWidth = appWidth
-        this.appHeight = appHeight
-
-        this.text = new Text("", { fill: 0xffffff });
+        this.label = new Text("Bye", { fill: 0xffffff });
         this.bg = new Graphics();
         this.textBg = new Graphics();
 
-        this.addChild(this.bg)
         this.visible = false;
-        gameState.setOnNotification(this.onNotification.bind(this))
+        this.addChild(this.bg, this.textBg, this.label);
     }
 
     update() {
 
-        this.text.text = this.notification
+        if (this.notification?.text) {
+            this.label.text = this.notification.text;
+        }
 
         this.bg.clear();
         this.bg.beginFill(0x000000, 0.5);
@@ -31,16 +32,16 @@ class Notification extends Container {
         this.textBg.clear();
         this.textBg.beginFill(0x000000, 0.75);
         this.textBg.drawRoundedRect(
-            (this.appWidth / 2) - (this.text.width / 2) - (paddingX / 2),
-            (this.appHeight / 2) - (this.text.height / 2) - (paddingY / 2),
-            this.text.width + paddingX,
-            this.text.height + paddingY,
+            (this.appWidth / 2) - (this.label.width / 2) - (paddingX / 2),
+            (this.appHeight / 2) - (this.label.height / 2) - (paddingY / 2),
+            this.label.width + paddingX,
+            this.label.height + paddingY,
         )
         this.textBg.endFill();
 
-        this.text.position.set(
-            (this.appWidth / 2) - (this.text.width / 2),
-            (this.appHeight / 2) - (this.text.height / 2),
+        this.label.position.set(
+            (this.appWidth / 2) - (this.label.width / 2),
+            (this.appHeight / 2) - (this.label.height / 2),
         )
     }
 
@@ -48,14 +49,19 @@ class Notification extends Container {
         this.update();
     }
 
-    onNotification(text, st) {
-        this.notification = text;
-        this.update();
-        this.visible = true;
-        if (!st) {
-            setTimeout(() => {
-                this.visible = false;
-            }, 2500);
+    onNotification() {
+        if (this.state.notifications.length > 0) {
+            console.log("Notification exec: ", this.state.notifications[0]);
+            this.notification = this.state.notifications[0];
+            this.state.notifications.shift();
+            this.visible = true;
+            this.update();
+            if (!this.notification.static) {
+                setTimeout(() => {
+                    this.visible = false;
+                    this.onNotification();
+                }, 2500);
+            }
         }
     }
 

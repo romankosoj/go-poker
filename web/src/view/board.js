@@ -64,7 +64,8 @@ class Board extends Container {
 
     clear() {
         this.removeChildren();
-        this.addChild(this.background);
+        this.cards.removeChildren();
+        this.addChild(this.background, this.cards);
         this.onResize();
     }
 

@@ -31,32 +31,20 @@ class Action extends React.Component {
         this.checkPossible = false;
         this.callPossible = false;
         this.raisePossible = false;
-        console.log("actions: ", actions)
 
         if (actions & 1) {
             // 1 in first bit => Player can fold
-
-            console.log("can fold", actions)
-
             this.foldPossible = true;
         }
         if ((actions >> 1) & 1) {
             // 1 in second bit => player can bet or call
-            console.log("can call", actions)
-
-
             this.callPossible = true;
         }
         if ((actions >> 2) & 1) {
-
-            console.log("can raise", actions)
-
             // 1 in second bit => player can bet or call
             this.raisePossible = true;
         }
         if ((actions >> 3) & 1) {
-            console.log("can ceck", actions)
-
             // 1 in second bit => player can bet or call
             this.checkPossible = true;
         }

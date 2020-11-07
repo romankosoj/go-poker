@@ -1,6 +1,7 @@
 package hand
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -30,8 +31,6 @@ func (h *Hand) actions(preflop bool) {
 			}
 		}
 	}
-	log.Printf("Blocking: %v", blocking)
-	log.Printf("Starting with [%v] bigBlind: [%v]", startIndexBlocking%len(blocking), h.bigBlindIndex)
 
 	h.recAction(blocking, startIndexBlocking%len(blocking), preflop)
 }
@@ -50,8 +49,6 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 	}
 
 	k := blocking[i]
-
-	log.Printf("Player fix")
 
 	if k < 0 || !h.Players[k].Active {
 		log.Printf("player inactive")
@@ -73,7 +70,7 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 		}
 
 		if a.Action == events.FOLD {
-			h.fold(h.Players[k].ID)
+			h.Fold(h.Players[k].ID)
 			blocking = removeBlocking(blocking, i)
 			removed = true
 			success = true
@@ -141,28 +138,24 @@ func (h *Hand) recAction(blocking []int, i int, preflop bool) {
 			Action:  events.FOLD,
 			Payload: 0,
 		}
-		h.fold(h.Players[k].ID)
+		h.Fold(h.Players[k].ID)
 		removeBlocking(blocking, i)
 		removed = true
 	}
 
-	utils.SendToAll(h.Players, events.NewActionProcessedEvent(succeededAction.Action, payload, k))
+	utils.SendToAll(h.Players, events.NewActionProcessedEvent(succeededAction.Action, payload, k, h.Bank.GetTotalPlayerBet(h.Players[k].ID)))
 
 	time.Sleep(1 * time.Second)
 
 	if !checkIfEmpty(blocking) {
-		log.Printf("Blocking is not empty")
 
 		next := (i + 1) % len(blocking)
 		if removed {
 			next = i % len(blocking)
 		}
-		log.Printf("next is [%v] in %v", blocking[next], blocking)
 		// blocking has changed now so the length is different and the
 		h.recAction(blocking, next, preflop)
 	}
-
-	log.Printf("Action Round is finished")
 
 	return
 
@@ -175,25 +168,9 @@ func (h *Hand) holeCards() {
 			cards[0] = h.cardGen.SelectRandom()
 			cards[1] = h.cardGen.SelectRandom()
 			h.HoleCards[h.Players[i].ID] = cards
-			log.Printf("Cards 0:%v 1:%v", cards[0].String(), cards[1].String())
 			utils.SendToPlayer(&h.Players[i], events.NewHoleCardsEvent(cards))
 		}
 	}
-}
-
-func (h *Hand) fold(id string) error {
-	i, err := h.searchByActiveID(id)
-
-	log.Printf("folding player %v", id)
-
-	if err != nil {
-		log.Printf("Error during Folding Player[%v]: %v", i, err)
-		return err
-	}
-
-	h.Players[i].Active = false
-	h.InCount--
-	return nil
 }
 
 func (h *Hand) Fold(id string) error {
@@ -202,9 +179,13 @@ func (h *Hand) Fold(id string) error {
 	if err != nil {
 		return err
 	}
+
+	if i < 0 || i >= len(h.Players) {
+		return errors.New("Something went wrong")
+	}
 	h.Players[i].Active = false
 	h.InCount--
-	utils.SendToAll(h.Players, events.NewActionProcessedEvent(events.FOLD, 0, i))
+	utils.SendToAll(h.Players, events.NewActionProcessedEvent(events.FOLD, 0, i, h.Bank.GetTotalPlayerBet(h.Players[i].ID)))
 	log.Printf("Folded player [%v]", h.Players[i].String())
 	return nil
 }
@@ -214,9 +195,6 @@ func (h *Hand) playerError(i int, message string) {
 }
 
 func (h *Hand) waitForAction(i int, preflop bool) (events.Action, error) {
-
-	log.Printf("Waiting for Player Action from Player: %v", h.Players[i].String())
-
 	if preflop {
 		utils.SendToAll(h.Players, events.NewWaitForActionEvent(i, 0b111))
 	} else {
@@ -224,7 +202,6 @@ func (h *Hand) waitForAction(i int, preflop bool) (events.Action, error) {
 	}
 	e := <-h.Players[i].In
 	action, err := events.ToAction(e)
-	log.Printf("Action received %v with err %v", action, err)
 	if err != nil {
 		return events.Action{}, err
 	}
@@ -241,13 +218,13 @@ func (h *Hand) PlayerLeaves(id string) error {
 		return err
 	}
 
-	err = h.fold(id)
+	err = h.Fold(id)
 
 	if err != nil {
 		return err
 	}
 
-	utils.SendToAll(h.Players, events.NewActionProcessedEvent(events.FOLD, 0, i))
+	utils.SendToAll(h.Players, events.NewActionProcessedEvent(events.FOLD, 0, i, h.Bank.GetTotalPlayerBet(h.Players[i].ID)))
 
 	if len(h.Players) < 2 {
 		h.End()

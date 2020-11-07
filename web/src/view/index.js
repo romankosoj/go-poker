@@ -13,6 +13,7 @@ class View extends React.Component {
         super(props);
         this.gameState = props.game.state;
         this.game = props.game.state.state;
+        this.loader = props.loader;
         this.didSetup = false;
     }
 
@@ -39,10 +40,11 @@ class View extends React.Component {
             this.table = new Graphics();
             this.board = new Board(this.game)
 
-            this.notification = new Notification(this.gameState, this.app.renderer.width, this.app.renderer.height);
+            this.players = new Players(this.gameState);
+            this.players.position.set(0, 0)
+
+            this.notification = new Notification(this.game, this.app.renderer.width, this.app.renderer.height);
             this.notification.position.set(0, 0);
-            this.players = new Players(this.gameState, this.table);
-            this.players.position.set(0,0)
 
             this.app.stage.addChild(this.table, this.board, this.players, this.notification);
 
@@ -67,19 +69,19 @@ class View extends React.Component {
             this.board.position.set((this.app.renderer.width / 2) - (this.board.width / 2), (this.app.renderer.height / 2) - (this.board.height / 2));
         })
     }
-    
+
     setup() {
         console.log("Setup exec")
         this.didSetup = true;
         this.id = Loader.shared.resources["textures/cards.json"].textures;
 
         this.notification.reset();
-        this.players.setup(this.id);
+        this.players.setup(this.id, { x: this.table.x + this.tableWidth, y: this.table.y + this.tableHeight, width: this.tableWidth, height: this.tableHeight });
         this.board.setup(this.id);
 
         this.app.ticker.add(delta => this.gameLoop(delta))
     }
-    
+
     gameLoop(delta) {
         this.players.gameLoop(delta);
         this.workUpdateQueue();
@@ -90,7 +92,6 @@ class View extends React.Component {
         if (this.gameState.updateQueue.length > 0) {
             for (let i = 0; i < this.gameState.updateQueue.length; i++) {
                 const work = this.gameState.updateQueue[0];
-                console.log("Work has to be done")
                 this.updateFromState(work.event, work.data)
                 this.gameState.updateQueue.shift();
             }
@@ -105,7 +106,7 @@ class View extends React.Component {
         if (event === UpdateEvents.playerList) {
             this.players.updateFromState();
         }
-        if (event === UpdateEvents.playerCards) {
+        if (event === UpdateEvents.updateAllPlayers) {
             this.players.updateAllPlayersFromState();
         }
         if (event === UpdateEvents.player) {
@@ -116,6 +117,12 @@ class View extends React.Component {
         }
         if (event === UpdateEvents.board) {
             this.board.updateFromState();
+        }
+        if (event === UpdateEvents.notification) {
+            this.notification.onNotification()
+        }
+        if (event === UpdateEvents.boardReset) {
+            this.board.clear();
         }
     }
 

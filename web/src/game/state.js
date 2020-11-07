@@ -17,6 +17,7 @@ class GameState {
             smallBlind: 0,
             bigBlind: 0,
             lastAction: -1,
+            notifications: [],
         };
         this.name = "GameState test";
         this.onNotification = (text, st) => {
@@ -28,7 +29,6 @@ class GameState {
     }
 
     setOnPossibleActions(onPossibleActions) {
-        console.log("OnPossibleActions set");
         this.onPossibleAction = onPossibleActions.bind(this);
     }
 
@@ -50,17 +50,20 @@ class GameState {
 
     decodeChange(e) {
 
-        console.log("decoding event", e)
+        console.log("decoding event", e.event)
         switch (e.event) {
 
             case JOIN_SUCCESS:
-                console.log("Players: ", e.data.players)
                 this.state.roundState = -2;
                 this.state.player = e.data.position;
                 for (let i = 0; i < e.data.players.length; i++) {
+                    if (this.state.players.find(obj => {
+                        return obj.id === e.data.players[i].id;
+                    })) {
+                        continue;
+                    }
                     this.state.players.push(new Player(e.data.players[i].username, e.data.players[i].id, e.data.players[i].buyIn));
                 }
-                this.onNotification("The game starts soon...", true);
                 this.stateBuild = true;
                 this.updateQueue.push({ event: UpdateEvents.lobbyJoin })
                 break;
@@ -73,12 +76,13 @@ class GameState {
                 break;
 
             case GAME_START:
+                this.resetState();
                 this.state.roundState = -1;
                 this.state.player = e.data.position;
-                for (let i = 0; i < e.data.players.length; i++) {
-                    this.state.players.push(new Player(e.data.players[i].username, e.data.players[i].id, e.data.players[i].buyIn));
-                }
+                this.state.notifications.push({ text: "Game starts.", static: false })
+                this.updateQueue.push({ event: UpdateEvents.notification })
                 this.onGameStart();
+                this.updateQueue.push({ event: UpdateEvents.gameStart })
                 break;
             case DEALER_SET:
                 this.state.dealer = e.data;
@@ -90,19 +94,18 @@ class GameState {
                     this.state.players[i].cards = [{ color: -1, value: -1 }, { color: -1, value: -1 },]
                 }
                 this.state.players[this.state.player].cards = e.data.cards;
-                this.updateQueue.push({ event: UpdateEvents.playerCards });
+                this.updateQueue.push({ event: UpdateEvents.updateAllPlayers });
                 break;
 
             case WAIT_FOR_PLAYER_ACTION:
                 this.state.waitingFor = e.data.position;
                 this.state.players[e.data.position].waiting = true;
-                console.log("On possible actions called with", e.data.possibleActions)
+                this.updateQueue.push({ event: UpdateEvents.player, data: e.data.position })
                 if (e.data.position === this.state.player) {
                     this.onPossibleAction(e.data.possibleActions);
                 } else {
                     this.onPossibleAction(0);
                 }
-                this.updateQueue.push({ event: UpdateEvents.player, data: e.data.position })
                 break;
 
             // case PLAYER_LEAVES:
@@ -120,7 +123,7 @@ class GameState {
                 if (this.state.lastAction > -1) {
                     const lastIndex = this.state.lastAction
                     this.state.players[lastIndex].isLastAction = false;
-                    this.updateQueue.push({event: UpdateEvents.player, data: lastIndex});
+                    this.updateQueue.push({ event: UpdateEvents.player, data: lastIndex });
                 }
                 const player = this.state.players[e.data.position];
                 player.waiting = false;
@@ -131,10 +134,10 @@ class GameState {
                     player.in = false;
                 }
                 if (action.action === BET || action.action === RAISE) {
-                    this.state.players[e.data.position].bet = action.amount;
-                    this.state.bet = action.amount;
+                    this.state.bet = e.data.totalAmount;
                 }
 
+                this.state.players[e.data.position].bet = e.data.totalAmount;
                 this.state.lastAction = e.data.position;
                 this.state.waitingFor = -1;
                 this.updateQueue.push({ event: UpdateEvents.player, data: e.data.position });
@@ -161,14 +164,32 @@ class GameState {
 
             case GAME_END:
                 this.state.roundState = 4;
-                console.log("notification request")
-                this.onNotification("Game ended. Next game coninues now.", false);
+                console.log("Game Ended: ", e.data.winners, "win share: ", e.data.share)
+                this.state.notifications.push({ text: "Game ended. Winner is " + e.data.winners[0].username, static: false })
+                this.updateQueue.push({ event: UpdateEvents.notification })
                 this.updateQueue.push({ event: UpdateEvents.gameEnd })
-                this.onGameEnd();
                 break;
             default:
                 break;
         }
+    }
+
+    resetState() {
+        this.state.dealer = -1
+        this.state.board = [];
+        this.state.bet = 0;
+        for (let i = 0; i < this.state.players.length; i++) {
+            this.state.players[i].reset();
+        }
+        this.state.waitingFor = -1;
+        this.state.smallBlind = 0;
+        this.state.bigBlind = 0;
+        this.state.lastAction = -1;
+        this.state.notifications = [];
+
+        this.updateQueue.push({ event: UpdateEvents.updateAllPlayers });
+        this.updateQueue.push({ event: UpdateEvents.boardReset });
+
     }
 
     getPlayerState(position) {
@@ -185,6 +206,8 @@ export const UpdateEvents = {
     board: 4,
     gameEnd: 5,
     dealer: 6,
-    playerCards: 7,
+    updateAllPlayers: 7,
     lobbyJoin: 8,
+    notification: 9,
+    boardReset: 10,
 }

@@ -1,8 +1,6 @@
 package hand
 
 import (
-	"log"
-
 	"github.com/JohnnyS318/go-poker/models"
 )
 
@@ -173,14 +171,11 @@ func RankSpecificHand(cards []models.Card) int {
 		validStates = validStates & 0b111110111
 	}
 
-	log.Printf("Range is: %v to: %v", min, identifier)
 	if m1 == -1 && identifier-min == 4 {
 		validStates = validStates & 0b100100000
 	} else if m1 == -1 {
 		validStates = validStates & 0b000100001
 	}
-
-	log.Printf("Valid State: %v", validStates)
 
 	f := 0
 	for f = 8; f >= 0; f-- {
@@ -188,8 +183,6 @@ func RankSpecificHand(cards []models.Card) int {
 			break
 		}
 	}
-
-	log.Printf("Hand State: %v", f)
 
 	if m1 == -1 {
 		m1 = identifier

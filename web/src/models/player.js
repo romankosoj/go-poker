@@ -23,6 +23,15 @@ class Player {
         this.in = val;
     }
 
+    reset() {
+        this.isLastAction = false;
+        this.waiting = false;
+        this.cards = [];
+        this.bet = 0;
+        this.buyIn = 0;
+        this.in = true;
+    }
+
 
 }
 

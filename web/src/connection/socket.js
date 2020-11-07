@@ -20,14 +20,13 @@ class Game {
         this.ws.onclose = e => {
             console.log("close", e)
         };
-        
+
         this.ws.onmessage = e => {
-            console.log("Event: ", e)
             if (e.data) {
                 this.state.decodeChange(JSON.parse(e.data));
             }
         };
-        
+
         this.ws.onopen = e => {
             if (e.type === "error") {
                 this.onClose();

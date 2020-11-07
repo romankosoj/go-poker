@@ -2,21 +2,20 @@ import { Container } from "pixi.js";
 import { Player } from "./player";
 
 class Players extends Container {
-    constructor(state, table) {
+    constructor(state) {
         super();
         this.state = state;
-        this.table = table;
         this.angles = [];
     }
 
-    setup(id) {
+    setup(id, table) {
         this.id = id;
+        this.table = table;
     }
 
     updateFromState() {
-        console.log("Update Players from State: ", this.state.state.players)
-
-        if (this.state.state.players.length === 0) {
+        console.log("Updated from state: ", this.state.state.players);
+        if (this.state.state.players.length === 0 || !this.table) {
             return
         }
         const a = 360 / this.state.state.players.length;
@@ -52,7 +51,7 @@ class Players extends Container {
 
     gameLoop(delta) {
         for (let i = 0; i < this.children.length; i++) {
-            this.children[i].gameLoop();
+            this.children[i].gameLoop(delta);
         }
     }
 }

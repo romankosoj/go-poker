@@ -109,8 +109,14 @@ class Player extends Container {
         this.avatar.drawCircle(this.options.avatarRadius, this.options.avatarRadius, this.options.avatarRadius);
         this.avatar.endFill();
 
-        // updateCards
-        this.board.pushOrUpdate(this.playerState.cards);
+        console.log("Player Cards: ", this.playerState.cards)
+        if (this.playerState.cards.length <= 0) {
+            this.board.clear();
+        } else {
+            // updateCards
+            this.board.pushOrUpdate(this.playerState.cards);
+        }
+
 
 
         this.board.position.set((this.calcWidth / 2) - (this.board.width / 2) + this.options.marginX, this.avatar.height + 2 * this.options.marginY);
@@ -158,7 +164,6 @@ class Player extends Container {
     updateFromState() {
         this.playerState = this.state.getPlayerState(this.index);
         this.update({});
-        console.log("Player active ?:", this.playerState.in, " [", this.index, "]");
     }
 }
 

@@ -11,6 +11,8 @@ import (
 
 func (h *Hand) Start(players []models.Player, dealer int) {
 
+	h.Bank.Reset()
+
 	h.Dealer = dealer
 	h.Players = players
 	h.InCount = len(players)
@@ -38,14 +40,15 @@ func (h *Hand) Start(players []models.Player, dealer int) {
 	time.Sleep(3 * time.Second)
 
 	//set predefined blinds
-	h.setBlinds()
+	err := h.setBlinds()
 
-	log.Printf("Blinds Choosen")
+	if err != nil {
+		h.Bank.ResetRound(nil)
+		return
+	}
 
 	// Set players hole cards
 	h.holeCards()
-
-	log.Printf("Hole cards choosen")
 
 	time.Sleep(3 * time.Second)
 
@@ -73,7 +76,6 @@ func (h *Hand) Start(players []models.Player, dealer int) {
 
 	h.WhileNotEnded(func() {
 		h.actions(false)
-		log.Printf("Showdown")
 	})
 
 	winners := h.showdown()
@@ -93,8 +95,6 @@ func (h *Hand) Start(players []models.Player, dealer int) {
 	share := h.Bank.ResetRound(winners)
 
 	utils.SendToAll(h.Players, events.NewGameEndEvent(winningPublic, share))
-
-	log.Printf("Hand Ended leaving now")
 
 }
 
